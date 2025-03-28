@@ -1,0 +1,13 @@
+{
+  "extends": "@tsconfig/react-native/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "types": ["nativewind/types"], // Optional: for NativeWind if installed
+    "typeRoots": ["./src"],        // Include custom .d.ts files (e.g., nativewind.d.ts)
+    "baseUrl": ".",                // Optional: for absolute imports
+    "paths": {
+      "*": ["src/*"]               // Optional: map src/* to root
+    }
+  },
+  "include": ["src/**/*"]
+}
