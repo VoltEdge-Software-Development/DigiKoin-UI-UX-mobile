@@ -1,13 +1,21 @@
 {
-  "extends": "@tsconfig/react-native/tsconfig.json",
   "compilerOptions": {
-    "strict": true,
-    "types": ["nativewind/types"], // Optional: for NativeWind if installed
-    "typeRoots": ["./src"],        // Include custom .d.ts files (e.g., nativewind.d.ts)
-    "baseUrl": ".",                // Optional: for absolute imports
-    "paths": {
-      "*": ["src/*"]               // Optional: map src/* to root
-    }
+    "target": "esnext",              // Compile to modern JS
+    "module": "commonjs",            // CommonJS for Node.js compatibility
+    "lib": ["esnext"],               // Use ESNext features (covers ES2020 and beyond)
+    "allowJs": true,                 // Allow JS files if needed
+    "jsx": "react-native",           // JSX for React Native
+    "noEmit": true,                  // Don’t generate output files (Metro handles this)
+    "isolatedModules": true,         // Required for React Native
+    "strict": true,                  // Enable strict type checking
+    "moduleResolution": "node",      // Node-style module resolution
+    "baseUrl": ".",                  // Base directory for relative imports
+    "esModuleInterop": true,         // Better interop with CommonJS modules
+    "skipLibCheck": true             // Skip type checking of declaration files
   },
-  "include": ["src/**/*"]
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js"
+  ]
 }

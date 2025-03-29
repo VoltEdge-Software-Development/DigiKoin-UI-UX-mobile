@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define navigation stack param list
 type RootStackParamList = {
@@ -12,7 +13,7 @@ type RootStackParamList = {
   ResetPassword: undefined;
   SignUp: undefined;
   Terms: undefined;
-  Welcome: undefined; // Back navigation
+  Welcome: undefined;
 };
 
 // Define props type
@@ -27,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
   const [error, setError] = useState<string>('');
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-  const authenticate = () => {
+  const authenticate = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !password || !userType) {
       setError('Please fill in all fields.');
@@ -39,48 +40,20 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     }
     setError('');
 
-    // Simulate authentication
-    localStorage.setItem('userType', userType);
-    localStorage.setItem('isLoggedIn', 'true');
-    setIsLoggedIn(true);
+    try {
+      // Simulate authentication with AsyncStorage
+      await AsyncStorage.setItem('userType', userType);
+      await AsyncStorage.setItem('isLoggedIn', 'true');
+      setIsLoggedIn(true);
 
-    if (userType === 'admin') {
-      localStorage.setItem('kycVerified', 'true');
-      navigation.navigate('AdminDashboard');
-    } else {
-      const isKycVerified = localStorage.getItem('kycVerified') === 'true';
-      if (!isKycVerified) {
-        navigation.navigate('KYC');
-        setIsLoggedIn(false); // Reset if KYC needed
-      } else {
-        switch (userType) {
-          case 'investor':
-            navigation.navigate('InvestorDashboard');
-            break;
-          case 'minor':
-            navigation.navigate('MinorDashboard');
-            break;
-          default:
-            setError('Invalid user type');
-        }
-      }
-    }
-  };
-
-  const handleAltLogin = (provider: string) => () => {
-    Alert.alert(`Logging in with ${provider}`, 'Coming soon!', [{ text: 'OK' }]);
-    localStorage.setItem('userType', userType);
-    localStorage.setItem('isLoggedIn', 'true');
-    setIsLoggedIn(true);
-
-    setTimeout(() => {
       if (userType === 'admin') {
-        localStorage.setItem('kycVerified', 'true');
+        await AsyncStorage.setItem('kycVerified', 'true');
         navigation.navigate('AdminDashboard');
       } else {
-        const isKycVerified = localStorage.getItem('kycVerified') === 'true';
+        const isKycVerified = (await AsyncStorage.getItem('kycVerified')) === 'true';
         if (!isKycVerified) {
           navigation.navigate('KYC');
+          setIsLoggedIn(false); // Reset if KYC needed
         } else {
           switch (userType) {
             case 'investor':
@@ -94,7 +67,46 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
           }
         }
       }
-    }, 500);
+    } catch (error) {
+      console.error('Error during authentication:', error);
+      setError('An error occurred during login.');
+    }
+  };
+
+  const handleAltLogin = (provider: string) => async () => {
+    Alert.alert(`Logging in with ${provider}`, 'Coming soon!', [{ text: 'OK' }]);
+
+    try {
+      await AsyncStorage.setItem('userType', userType);
+      await AsyncStorage.setItem('isLoggedIn', 'true');
+      setIsLoggedIn(true);
+
+      setTimeout(async () => {
+        if (userType === 'admin') {
+          await AsyncStorage.setItem('kycVerified', 'true');
+          navigation.navigate('AdminDashboard');
+        } else {
+          const isKycVerified = (await AsyncStorage.getItem('kycVerified')) === 'true';
+          if (!isKycVerified) {
+            navigation.navigate('KYC');
+          } else {
+            switch (userType) {
+              case 'investor':
+                navigation.navigate('InvestorDashboard');
+                break;
+              case 'minor':
+                navigation.navigate('MinorDashboard');
+                break;
+              default:
+                setError('Invalid user type');
+            }
+          }
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Error during alt login:', error);
+      setError('An error occurred during login.');
+    }
   };
 
   return (
@@ -113,7 +125,6 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
             placeholder="Select user type"
             selectTextOnFocus
             accessibilityLabel="Select user type"
-            // Simulate dropdown with predefined options
             editable={false}
             onPressIn={() => {
               Alert.alert('Select User Type', '', [
@@ -172,19 +183,31 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
       {/* Alternative Login Options */}
       <Text className="text-[#454545] text-center mb-3">Or login with:</Text>
       <View className="flex-row justify-around mb-5">
-        <TouchableOpacity onPress={handleAltLogin('Google')} accessibilityLabel="Login with Google">
-          <Image source={require('../images/google-logo.png')} className="w-10 h-10" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleAltLogin('Apple')} accessibilityLabel="Login with Apple">
-          <Image source={require('../images/apple-logo.png')} className="w-10 h-10" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleAltLogin('Facebook')} accessibilityLabel="Login with Facebook">
-          <Image source={require('../images/facebook-logo.png')} className="w-10 h-10" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleAltLogin('MetaMask')} accessibilityLabel="Login with MetaMask">
-          <Image source={require('../images/metamask-logo.png')} className="w-10 h-10" />
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity onPress={handleAltLogin('Google')} accessibilityLabel="Login with Google">
+    <Image
+      source={require('../images/google-logo.png')}
+      style={{ width: 40, height: 40 }}
+    />
+  </TouchableOpacity>
+  <TouchableOpacity onPress={handleAltLogin('Apple')} accessibilityLabel="Login with Apple">
+    <Image
+      source={require('../images/apple-logo.png')}
+      style={{ width: 40, height: 40 }}
+    />
+  </TouchableOpacity>
+  <TouchableOpacity onPress={handleAltLogin('Facebook')} accessibilityLabel="Login with Facebook">
+    <Image
+      source={require('../images/facebook-logo.png')}
+      style={{ width: 40, height: 40 }}
+    />
+  </TouchableOpacity>
+  <TouchableOpacity onPress={handleAltLogin('MetaMask')} accessibilityLabel="Login with MetaMask">
+    <Image
+      source={require('../images/metamask-logo.png')}
+      style={{ width: 40, height: 40 }}
+    />
+  </TouchableOpacity>
+</View>
 
       {/* Back Button */}
       <TouchableOpacity
