@@ -25,6 +25,10 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow DigiKoin to use your camera for KYC verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow DigiKoin to access your photo library for KYC verification.</string>
 	<dict>
 	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
 		<key>NSAllowsArbitraryLoads</key>
