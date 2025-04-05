@@ -64,15 +64,6 @@ const BuySell: React.FC<BuySellProps> = ({ setIsLoggedIn, userType, darkMode, to
   const [sellConfirmation, setSellConfirmation] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  // Restrict access for minors
-  useEffect(() => {
-    if (userType === 'minor') {
-      Alert.alert('Access Denied', 'Minors cannot buy or sell tokens.', [
-        { text: 'OK', onPress: () => navigation.navigate('MinorDashboard') },
-      ]);
-    }
-  }, [userType, navigation]);
-
   useEffect(() => {
     if (error || buyConfirmation || sellConfirmation) {
       const timer = setTimeout(() => {

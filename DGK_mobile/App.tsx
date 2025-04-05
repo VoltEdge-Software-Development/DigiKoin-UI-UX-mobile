@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from './types';
+import { Text } from 'react-native';
 import Header from './Header';
 import Nav from './Nav';
 import Welcome from './Welcome';
@@ -73,7 +74,7 @@ const App: React.FC = () => {
           setKycVerified(false);
           setUserType(null);
           setDarkMode(false);
-          navigation.replace('Welcome');
+          navigation.replace('Welcome', { setIsLoggedIn, darkMode: false, toggleMode });
         } catch (error) {
           console.error('Error during logout:', error);
         }
@@ -84,75 +85,56 @@ const App: React.FC = () => {
   };
 
   type ProtectedRouteProps = StackScreenProps<RootStackParamList> & {
-    component: React.FC<any>;
-    setIsLoggedIn: (value: boolean) => void;
+    component: React.ComponentType<any>;
   };
 
-  const ProtectedRoute = ({ component: Component, ...rest }: ProtectedRouteProps) => {
-    const { route } = rest;
-    const allowedMinorRoutes = ['MinorDashboard', 'EducationalContent', 'CommunityEngagement', 'Profile', 'FAQ', 'Terms'];
-
+  const ProtectedRoute = ({ component: Component, ...props }: ProtectedRouteProps) => {
     if (!isLoggedIn || !kycVerified) {
-      return <Login {...rest} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+      return <Login {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
     }
 
-    // Restrict non-minors from minor-specific routes
-    if (userType !== 'minor' && allowedMinorRoutes.includes(route.name) && route.name !== 'Profile' && route.name !== 'FAQ' && route.name !== 'Terms') {
-      return (
-        <Text style={{ color: darkMode ? '#fff' : '#000' }}>You do not have access to this page.</Text>
-      );
+    const allowedMinorAndAdminRoutes = ['MinorDashboard', 'EducationalContent', 'CommunityEngagement'];
+    const universalRoutes = ['Profile', 'FAQ', 'Terms'];
+
+    if (userType === 'investor' && allowedMinorAndAdminRoutes.includes(props.route.name)) {
+      return <Text style={{ color: darkMode ? '#fff' : '#000' }}>You do not have access to this page.</Text>;
     }
 
-    return (
-      <Component
-        {...rest}
-        setIsLoggedIn={setIsLoggedIn}
-        userType={userType}
-        darkMode={darkMode}
-        toggleMode={toggleMode}
-      />
-    );
+    return <Component {...props} userType={userType} />;
   };
 
   type PublicRouteProps = StackScreenProps<RootStackParamList> & {
-    component: React.FC<any>;
+    component: React.ComponentType<any>;
     restricted?: boolean;
   };
 
-  const PublicRoute = ({ component: Component, restricted, ...rest }: PublicRouteProps) => {
+  const PublicRoute = ({ component: Component, restricted, ...props }: PublicRouteProps) => {
     if (restricted && isLoggedIn && kycVerified) {
       if (userType === 'admin') {
-        return <AdminDashboard setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <AdminDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       } else if (userType === 'investor') {
-        return <InvestorDashboard setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <InvestorDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       } else if (userType === 'minor') {
-        return <MinorDashboard setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <MinorDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       }
     }
-    return (
-      <Component
-        {...rest}
-        setIsLoggedIn={setIsLoggedIn}
-        darkMode={darkMode}
-        toggleMode={toggleMode}
-      />
-    );
+    return <Component {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
   };
 
   const HomeRoute: React.FC<StackScreenProps<RootStackParamList, 'Welcome'>> = ({ navigation }) => {
     useEffect(() => {
       if (isLoggedIn && kycVerified) {
         if (userType === 'admin') {
-          navigation.replace('AdminDashboard');
+          navigation.replace('AdminDashboard', { setIsLoggedIn, darkMode, toggleMode });
         } else if (userType === 'investor') {
-          navigation.replace('InvestorDashboard');
+          navigation.replace('InvestorDashboard', { setIsLoggedIn, darkMode, toggleMode });
         } else if (userType === 'minor') {
-          navigation.replace('MinorDashboard');
+          navigation.replace('MinorDashboard', { setIsLoggedIn, darkMode, toggleMode });
         }
       }
     }, [navigation, isLoggedIn, kycVerified, userType]);
 
-    return <Welcome setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+    return <Welcome navigation={navigation} route={{} as any} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
   };
 
   return (
@@ -168,91 +150,123 @@ const App: React.FC = () => {
         })}
       >
         <Stack.Screen name="Welcome" component={HomeRoute} />
-        <Stack.Screen name="Login" component={(props) => <PublicRoute restricted component={Login} {...props} />} />
-        <Stack.Screen name="SignUp" component={(props) => <PublicRoute restricted component={SignUp} {...props} />} />
+        <Stack.Screen
+          name="Login"
+          component={(props: StackScreenProps<RootStackParamList, 'Login'>) => (
+            <PublicRoute restricted component={Login} {...props} />
+          )}
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={(props: StackScreenProps<RootStackParamList, 'SignUp'>) => (
+            <PublicRoute restricted component={SignUp} {...props} />
+          )}
+        />
         <Stack.Screen
           name="ResetPassword"
-          component={(props) => <ResetPassword {...props} darkMode={darkMode} toggleMode={toggleMode} />}
+          component={(props: StackScreenProps<RootStackParamList, 'ResetPassword'>) => (
+            <ResetPassword navigation={props.navigation} route={props.route} darkMode={darkMode} toggleMode={toggleMode} />
+          )}
           options={{ headerShown: false }}
         />
         <Stack.Screen
           name="KYC"
-          component={(props) => <KYC setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />}
+          component={(props: StackScreenProps<RootStackParamList, 'KYC'>) => (
+            <KYC navigation={props.navigation} route={props.route} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />
+          )}
         />
         <Stack.Screen
           name="AdminDashboard"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'AdminDashboard'>) => (
+            <ProtectedRoute component={AdminDashboard} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: AdminDashboard }}
         />
         <Stack.Screen
           name="InvestorDashboard"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'InvestorDashboard'>) => (
+            <ProtectedRoute component={InvestorDashboard} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: InvestorDashboard }}
         />
         <Stack.Screen
           name="MinorDashboard"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'MinorDashboard'>) => (
+            <ProtectedRoute component={MinorDashboard} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: MinorDashboard }}
         />
         <Stack.Screen
           name="EducationalContent"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'EducationalContent'>) => (
+            <ProtectedRoute component={EducationalContent} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: EducationalContent }}
         />
         <Stack.Screen
           name="CommunityEngagement"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'CommunityEngagement'>) => (
+            <ProtectedRoute component={CommunityEngagement} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: CommunityEngagement }}
         />
         {userType !== 'minor' && (
           <>
             <Stack.Screen
               name="BuySell"
-              component={ProtectedRoute}
+              component={(props: StackScreenProps<RootStackParamList, 'BuySell'>) => (
+                <ProtectedRoute component={BuySell} {...props} />
+              )}
               options={{ headerShown: false }}
-              initialParams={{ component: BuySell }}
+              initialParams={{ userType: userType as 'investor' | 'admin' | null }}
             />
             <Stack.Screen
               name="Wallet"
-              component={ProtectedRoute}
+              component={(props: StackScreenProps<RootStackParamList, 'Wallet'>) => (
+                <ProtectedRoute component={Wallet} {...props} />
+              )}
               options={{ headerShown: false }}
-              initialParams={{ component: Wallet }}
+              initialParams={{ userType: userType as 'investor' | 'admin' | null }}
             />
             <Stack.Screen
               name="GoldStorage"
-              component={ProtectedRoute}
+              component={(props: StackScreenProps<RootStackParamList, 'GoldStorage'>) => (
+                <ProtectedRoute component={GoldStorage} {...props} />
+              )}
               options={{ headerShown: false }}
-              initialParams={{ component: GoldStorage }}
+              initialParams={{ userType: userType as 'investor' | 'admin' | null }}
             />
           </>
         )}
         <Stack.Screen
           name="Profile"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'Profile'>) => (
+            <ProtectedRoute component={Profile} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: Profile }}
+          initialParams={{ userType }}
         />
         <Stack.Screen
           name="FAQ"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'FAQ'>) => (
+            <ProtectedRoute component={FAQ} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: FAQ }}
+          initialParams={{ userType }}
         />
         <Stack.Screen
           name="Terms"
-          component={ProtectedRoute}
+          component={(props: StackScreenProps<RootStackParamList, 'Terms'>) => (
+            <ProtectedRoute component={Terms} {...props} />
+          )}
           options={{ headerShown: false }}
-          initialParams={{ component: Terms }}
         />
         <Stack.Screen name="Logout" component={Logout} options={{ headerShown: false }} />
         <Stack.Screen
           name="Nav"
-          component={(props) => <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} {...props} />}
+          component={(props: StackScreenProps<RootStackParamList, 'Nav'>) => (
+            <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} {...props} />
+          )}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -3,26 +3,14 @@ import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RootStackParamList } from './types';
+import { RootStackParamList, ProfileProps } from './types';
 import Header from './Header';
 import Nav from './Nav';
-import tw from 'twrnc'; // Add twrnc import
-
-interface ProfileProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
-
-interface UserInfo {
-  name: string;
-  verified: string;
-}
+import tw from 'twrnc';
 
 const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Profile'>>();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [userInfo, setUserInfo] = useState<{ name: string; verified: string } | null>(null);
   const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
@@ -118,7 +106,7 @@ const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, to
               setIsLoggedIn(false);
               setMessage('You have been logged out successfully!');
               setTimeout(() => {
-                navigation.navigate('Welcome');
+                navigation.navigate('Welcome', { setIsLoggedIn, darkMode, toggleMode });
                 setMessage('');
               }, 2000);
             } catch (error) {
@@ -130,6 +118,10 @@ const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, to
         },
       ]
     );
+  };
+
+  const viewTerms = () => {
+    navigation.navigate('Terms');
   };
 
   return (
@@ -203,19 +195,22 @@ const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, to
             </TouchableOpacity>
           </View>
 
-          {/* Logout Section */}
+          {/* Account Section */}
           <View
             style={tw`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
             accessibilityLabel="Account Section"
           >
             <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>Account</Text>
+            <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md mb-2`} onPress={viewTerms}>
+              <Text style={tw`text-white text-center text-base`}>Terms of Service</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md`} onPress={handleLogout}>
               <Text style={tw`text-white text-center text-base`}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };

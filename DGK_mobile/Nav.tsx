@@ -26,7 +26,6 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
     { name: 'Gold Storage', route: 'GoldStorage' }, // Only for investors/admins
     { name: 'Profile', route: 'Profile' },
     { name: 'FAQ', route: 'FAQ' },
-    // 'Terms' removed from here
   ];
 
   // Educational and community items for minors and admins
@@ -52,9 +51,65 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
     try {
       await AsyncStorage.multiRemove(['userType', 'isLoggedIn', 'kycVerified', 'darkMode']);
       setIsLoggedIn(false);
-      navigation.navigate('Welcome');
+      navigation.navigate('Welcome', { setIsLoggedIn, darkMode, toggleMode });
     } catch (error) {
       console.error('Error during logout:', error);
+    }
+  };
+
+  const handleNavigation = (routeName: keyof RootStackParamList) => {
+    switch (routeName) {
+      case 'Profile':
+        navigation.navigate('Profile', { setIsLoggedIn, userType, darkMode, toggleMode });
+        break;
+      case 'Welcome':
+        navigation.navigate('Welcome', { setIsLoggedIn, darkMode, toggleMode });
+        break;
+      case 'AdminDashboard':
+      case 'InvestorDashboard':
+      case 'MinorDashboard':
+      case 'EducationalContent':
+      case 'CommunityEngagement':
+        navigation.navigate(routeName, { setIsLoggedIn, darkMode, toggleMode });
+        break;
+      case 'BuySell':
+        navigation.navigate('BuySell', {
+          setIsLoggedIn,
+          userType: userType as 'investor' | 'admin' | null,
+          darkMode,
+          toggleMode,
+        });
+        break;
+      case 'Wallet':
+        navigation.navigate('Wallet', {
+          setIsLoggedIn,
+          userType: userType as 'investor' | 'admin' | null,
+          darkMode,
+          toggleMode,
+        });
+        break;
+      case 'GoldStorage':
+        navigation.navigate('GoldStorage', {
+          setIsLoggedIn,
+          userType: userType as 'investor' | 'admin' | null,
+          darkMode,
+          toggleMode,
+        });
+        break;
+      case 'FAQ':
+        navigation.navigate('FAQ', { setIsLoggedIn, userType, darkMode, toggleMode });
+        break;
+      case 'Terms':
+        navigation.navigate('Terms');
+        break;
+      case 'Logout':
+        navigation.navigate('Logout');
+        break;
+      case 'Nav':
+        navigation.navigate('Nav', { darkMode, setIsLoggedIn, userType, toggleMode });
+        break;
+      default:
+        navigation.navigate(routeName); // Fallback for unhandled routes
     }
   };
 
@@ -72,11 +127,7 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
           <TouchableOpacity
             key={item.route}
             style={tw`p-2 rounded-md ${route.name === item.route ? (darkMode ? 'bg-white/30' : 'bg-white/20') : ''}`}
-            onPress={() =>
-              item.route === 'Profile'
-                ? navigation.navigate('Profile', { setIsLoggedIn })
-                : navigation.navigate(item.route as keyof RootStackParamList)
-            }
+            onPress={() => handleNavigation(item.route as keyof RootStackParamList)}
             accessibilityLabel={`Navigate to ${item.name}`}
             activeOpacity={0.7}
           >
@@ -87,7 +138,7 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
                     ? 'text-white'
                     : 'text-[#FFB84D]'
                   : route.name === item.route
-                  ? 'text-white'
+                    ? 'text-white'
                   : 'text-[#B36300]'
               }`}
             >
