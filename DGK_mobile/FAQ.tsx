@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from './types';
+import Header from './Header';
+import Nav from './Nav';
+
+interface FAQProps {
+  setIsLoggedIn: (value: boolean) => void;
+  userType: 'minor' | 'investor' | 'admin' | null;
+  darkMode: boolean;
+  toggleMode: () => void;
+}
 
 interface FAQSection {
   title: string;
   questions: { question: string; answer: string[] }[];
 }
 
-const FAQ: React.FC = () => {
+const FAQ: React.FC<FAQProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'FAQ'>>();
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
 
   const faqData: FAQSection[] = [
@@ -284,7 +297,7 @@ const FAQ: React.FC = () => {
             '- Block Reward: The fixed amount of Digikoins awarded for each successfully mined block.',
             'Distribution Process:',
             '- Block Validation: Miners solve complex algorithms to validate transactions and add new blocks to the blockchain.',
-            '- Reward Allocation: Upon successful block addition, the block reward is distributed among miners proportionally to their hash rate contribution.',
+            '- Reward Allocation: Upon successful block addition, thebok reward is distributed among miners proportionally to their hash rate contribution.',
             '- Payout Schedule: Accumulated rewards are credited to miners’ wallets at regular intervals, typically daily or upon reaching a minimum threshold.',
             'Transparency Measures:',
             '- Real-Time Monitoring: The Digimine App provides real-time tracking of your mining performance and estimated rewards.',
@@ -436,44 +449,64 @@ const FAQ: React.FC = () => {
   };
 
   return (
-    <ScrollView className="flex-1 mt-[70px] p-5 bg-gray-200/85">
-      <View className="mb-5">
-        <Text className="text-3xl font-bold text-[#050142] mb-2">Frequently Asked Questions (FAQ)</Text>
-        <Text className="text-lg text-[#454545]">
-          <Text className="font-bold">Last Updated:</Text> 19/02/2025
-        </Text>
-        <Text className="text-base text-[#454545] mt-2">
-          This document serves as an official and comprehensive guide to the Digimine App, addressing a wide range of questions to assist users in understanding and utilizing the platform effectively.
-        </Text>
-      </View>
-
-      {faqData.map((section, index) => (
-        <View key={index} className="mb-4">
-          <TouchableOpacity
-            className="p-4 bg-[#050142] rounded-t-[10px] flex-row justify-between items-center"
-            onPress={() => toggleSection(index)}
-            accessibilityLabel={section.title}
+    <View className={`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
+      <Header darkMode={darkMode} toggleMode={toggleMode} />
+      <ScrollView className="flex-1">
+        <View className="p-5 mt-[70px] mb-5">
+          <Text
+            className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#050142]'}`}
           >
-            <Text className="text-xl font-bold text-white">{section.title}</Text>
-            <Text className="text-white text-lg">{expandedSection === index ? '−' : '+'}</Text>
-          </TouchableOpacity>
-          {expandedSection === index && (
-            <View className="p-4 bg-white/10 rounded-b-[10px] shadow-sm">
-              {section.questions.map((item, qIndex) => (
-                <View key={qIndex} className="mb-3">
-                  <Text className="text-lg font-semibold text-[#454545] mb-1">{item.question}</Text>
-                  {item.answer.map((paragraph, pIndex) => (
-                    <Text key={pIndex} className="text-base text-[#454545] mb-1">
-                      {paragraph.startsWith('- ') ? '• ' + paragraph.slice(2) : paragraph}
-                    </Text>
+            Frequently Asked Questions (FAQ)
+          </Text>
+          <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+            <Text className="font-bold">Last Updated:</Text> 19/02/2025
+          </Text>
+          <Text className={`text-base ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mt-2`}>
+            This document serves as an official and comprehensive guide to the Digimine App,
+            addressing a wide range of questions to assist users in understanding and utilizing
+            the platform effectively.
+          </Text>
+
+          {faqData.map((section, index) => (
+            <View key={index} className="mb-4">
+              <TouchableOpacity
+                className="p-4 bg-[#050142] rounded-t-[10px] flex-row justify-between items-center"
+                onPress={() => toggleSection(index)}
+                accessibilityLabel={section.title}
+                accessibilityHint={`Tap to ${expandedSection === index ? 'collapse' : 'expand'} ${section.title}`}
+              >
+                <Text className="text-xl font-bold text-white">{section.title}</Text>
+                <Text className="text-white text-lg">{expandedSection === index ? '−' : '+'}</Text>
+              </TouchableOpacity>
+              {expandedSection === index && (
+                <View
+                  className={`p-4 rounded-b-[10px] shadow-sm ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
+                >
+                  {section.questions.map((item, qIndex) => (
+                    <View key={qIndex} className="mb-3">
+                      <Text
+                        className={`text-lg font-semibold ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-1`}
+                      >
+                        {item.question}
+                      </Text>
+                      {item.answer.map((paragraph, pIndex) => (
+                        <Text
+                          key={pIndex}
+                          className={`text-base ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-1`}
+                        >
+                          {paragraph.startsWith('- ') ? '• ' + paragraph.slice(2) : paragraph}
+                        </Text>
+                      ))}
+                    </View>
                   ))}
                 </View>
-              ))}
+              )}
             </View>
-          )}
+          ))}
         </View>
-      ))}
-    </ScrollView>
+      </ScrollView>
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+    </View>
   );
 };
 

@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from './types';
 import Header from './Header';
 import Nav from './Nav';
+import tw from 'twrnc'; // Add twrnc import
 
 interface ProfileProps {
   setIsLoggedIn: (value: boolean) => void;
@@ -132,14 +133,14 @@ const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, to
   };
 
   return (
-    <View className={`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
+    <View style={tw`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
       <Header darkMode={darkMode} toggleMode={toggleMode} />
-      <ScrollView className="flex-1">
-        <View className="p-5 mt-[70px]">
+      <ScrollView style={tw`flex-1`}>
+        <View style={tw`p-5 mt-[70px]`}>
           {/* Message Display */}
           {message ? (
             <Text
-              className={`text-center text-base mb-5 ${darkMode ? 'text-green-400' : 'text-green-600'}`}
+              style={tw`text-center text-base mb-5 ${darkMode ? 'text-green-400' : 'text-green-600'}`}
               accessibilityRole="alert"
             >
               {message}
@@ -148,72 +149,68 @@ const Profile: React.FC<ProfileProps> = ({ setIsLoggedIn, userType, darkMode, to
 
           {/* User Info Section */}
           <View
-            className={`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
-            accessibilityRole="region"
-            accessibilityLabel="User Info"
+            style={tw`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
+            accessibilityLabel="User Info Section"
           >
-            <Text className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+            <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
               User Info
             </Text>
-            <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
-              <Text className="font-bold">Name: </Text>
+            <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+              <Text style={tw`font-bold`}>Name: </Text>
               {userInfo ? userInfo.name : 'Loading...'}
             </Text>
-            <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
-              <Text className="font-bold">ID Verification Status: </Text>
+            <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+              <Text style={tw`font-bold`}>ID Verification Status: </Text>
               {userInfo ? userInfo.verified : 'Loading...'}
             </Text>
           </View>
 
           {/* Security Settings Section */}
           <View
-            className={`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
-            accessibilityRole="region"
-            accessibilityLabel="Security Settings"
+            style={tw`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
+            accessibilityLabel="Security Settings Section"
           >
-            <Text className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+            <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
               Security Settings
             </Text>
             <TouchableOpacity onPress={changePassword}>
-              <Text className={`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2`}>Change Password</Text>
+              <Text style={tw`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2`}>Change Password</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={enable2FA}>
-              <Text className={`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2`}>Enable 2FA</Text>
+              <Text style={tw`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2`}>Enable 2FA</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={setupBiometricLogin}>
-              <Text className={`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Setup Biometric Login</Text>
+              <Text style={tw`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Setup Biometric Login</Text>
             </TouchableOpacity>
           </View>
 
           {/* Notification Center Section */}
           <View
-            className={`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
-            accessibilityRole="region"
-            accessibilityLabel="Notification Center"
+            style={tw`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
+            accessibilityLabel="Notification Center Section"
           >
-            <Text className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+            <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
               Notification Center
             </Text>
-            <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>
-              <Text className="font-bold">Price Alerts: </Text>Enabled
+            <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>
+              <Text style={tw`font-bold`}>Price Alerts: </Text>Enabled
             </Text>
-            <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>
-              <Text className="font-bold">Transaction Updates: </Text>Enabled
+            <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>
+              <Text style={tw`font-bold`}>Transaction Updates: </Text>Enabled
             </Text>
             <TouchableOpacity onPress={manageNotifications}>
-              <Text className={`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Manage Notification</Text>
+              <Text style={tw`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Manage Notification</Text>
             </TouchableOpacity>
           </View>
 
           {/* Logout Section */}
           <View
-            className={`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
-            accessibilityRole="region"
-            accessibilityLabel="Account"
+            style={tw`mb-5 p-4 rounded-[10px] shadow-md ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}
+            accessibilityLabel="Account Section"
           >
-            <Text className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>Account</Text>
-            <TouchableOpacity className="p-3 bg-[#050142] rounded-md" onPress={handleLogout}>
-              <Text className="text-white text-center text-base">Log Out</Text>
+            <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>Account</Text>
+            <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md`} onPress={handleLogout}>
+              <Text style={tw`text-white text-center text-base`}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </View>

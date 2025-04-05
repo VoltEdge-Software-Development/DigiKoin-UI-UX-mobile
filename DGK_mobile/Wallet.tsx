@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, FlatList, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, FlatList, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 import Header from './Header';
 import Nav from './Nav';
+import tw from 'twrnc';
 
 interface WalletProps {
   setIsLoggedIn: (value: boolean) => void;
@@ -30,19 +31,20 @@ interface Transaction {
 
 const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Wallet'>>();
-  const [wallet, setWallet] = useState<string>('digikoin');
+  type WalletKey = keyof WalletBalances;
+  const [wallet, setWallet] = useState<WalletKey>('digikoin');
   const [depositFormVisible, setDepositFormVisible] = useState<boolean>(false);
   const [withdrawFormVisible, setWithdrawFormVisible] = useState<boolean>(false);
   const [transferFormVisible, setTransferFormVisible] = useState<boolean>(false);
   const [depositAmount, setDepositAmount] = useState<string>('');
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
-  const [transferSource, setTransferSource] = useState<string>('');
-  const [transferDest, setTransferDest] = useState<string>('');
+  const [transferSource, setTransferSource] = useState<WalletKey | ''>('');
+  const [transferDest, setTransferDest] = useState<WalletKey | ''>('');
   const [transferAmount, setTransferAmount] = useState<string>('');
   const [depositConfirmation, setDepositConfirmation] = useState<string>('');
   const [withdrawConfirmation, setWithdrawConfirmation] = useState<string>('');
   const [transferConfirmation, setTransferConfirmation] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [walletBalances, setWalletBalances] = useState<WalletBalances>({
     digikoin: '100 DGK',
     btc: '0.5 BTC',
@@ -66,6 +68,13 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
   useEffect(() => {
     updateBalance();
   }, [wallet, walletBalances]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   const updateBalance = () => {
     if (wallet && walletBalances[wallet]) {
@@ -92,7 +101,7 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
     setWithdrawFormVisible(false);
     setTransferFormVisible(false);
     setDepositConfirmation('');
-    setError('');
+    setErrorMessage('');
   };
 
   const showWithdrawForm = () => {
@@ -100,7 +109,7 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
     setWithdrawFormVisible(true);
     setTransferFormVisible(false);
     setWithdrawConfirmation('');
-    setError('');
+    setErrorMessage('');
   };
 
   const showTransferForm = () => {
@@ -108,20 +117,20 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
     setWithdrawFormVisible(false);
     setTransferFormVisible(true);
     setTransferConfirmation('');
-    setError('');
+    setErrorMessage('');
   };
 
   const deposit = () => {
     if (!wallet || !depositAmount) {
-      setError('Please select a wallet and enter an amount.');
+      setErrorMessage('Please select a wallet and enter an amount.');
       return;
     }
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid amount.');
+      setErrorMessage('Please enter a valid amount.');
       return;
     }
-    setError('');
+    setErrorMessage('');
     const newBalances = { ...walletBalances };
     newBalances[wallet] = updateBalanceString(newBalances[wallet], amount);
     setWalletBalances(newBalances);
@@ -135,20 +144,20 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
 
   const withdraw = () => {
     if (!wallet || !withdrawAmount) {
-      setError('Please select a wallet and enter an amount.');
+      setErrorMessage('Please select a wallet and enter an amount.');
       return;
     }
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid amount.');
+      setErrorMessage('Please enter a valid amount.');
       return;
     }
     const currentBalance = parseBalance(walletBalances[wallet]);
     if (currentBalance < amount) {
-      setError('Insufficient balance in wallet.');
+      setErrorMessage('Insufficient balance in wallet.');
       return;
     }
-    setError('');
+    setErrorMessage('');
     const newBalances = { ...walletBalances };
     newBalances[wallet] = updateBalanceString(newBalances[wallet], -amount);
     setWalletBalances(newBalances);
@@ -162,24 +171,24 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
 
   const transfer = () => {
     if (!transferSource || !transferDest || !transferAmount) {
-      setError('Please fill in all fields.');
+      setErrorMessage('Please fill in all fields.');
       return;
     }
     if (transferSource === transferDest) {
-      setError('Source and destination wallets cannot be the same.');
+      setErrorMessage('Source and destination wallets cannot be the same.');
       return;
     }
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid amount.');
+      setErrorMessage('Please enter a valid amount.');
       return;
     }
     const sourceBalance = parseBalance(walletBalances[transferSource]);
     if (sourceBalance < amount) {
-      setError('Insufficient balance in source wallet.');
+      setErrorMessage('Insufficient balance in source wallet.');
       return;
     }
-    setError('');
+    setErrorMessage('');
     const newBalances = { ...walletBalances };
     newBalances[transferSource] = updateBalanceString(newBalances[transferSource], -amount);
     newBalances[transferDest] = updateBalanceString(newBalances[transferDest], amount);
@@ -195,27 +204,42 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
   };
 
   return (
-    <View className={`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
+    <View style={tw`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
       <Header darkMode={darkMode} toggleMode={toggleMode} />
-      <ScrollView className="flex-1">
-        <View className="p-5 mt-[70px]">
+      <ScrollView style={tw`flex-1`}>
+        <View style={tw`p-5 mt-[70px]`}>
+          {/* Error Message Display */}
+          {errorMessage && (
+            <View style={tw`absolute top-10 left-0 right-0 z-10 p-4 mx-7 bg-red-500/90 rounded-md`}>
+              <Text style={tw`text-white text-center`}>{errorMessage}</Text>
+            </View>
+          )}
+
           {/* Current Balance */}
-          <View className={`p-5 rounded-[10px] mb-5 items-center ${darkMode ? 'bg-orange-100/20' : 'bg-orange-50'}`}>
+          <View style={tw`p-5 rounded-[10px] mb-5 items-center ${darkMode ? 'bg-orange-100/20' : 'bg-orange-50'}`}>
             <Image
-              source={require('../images/DGK.png')}
-              className="w-12 h-12 mb-3"
+              source={require('../assets/DGK.png')}
+              style={tw`w-12 h-12 mb-3`}
               accessibilityLabel="DigiKoin Emblem"
             />
-            <Text className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#050142]'}`}>Current Balance</Text>
-            <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>{balanceDisplay}</Text>
+            <Text style={tw`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-[#050142]'}`}>
+              Current Balance
+            </Text>
+            <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+              {balanceDisplay}
+            </Text>
           </View>
 
           {/* Wallet Section */}
-          <View className={`p-5 rounded-[10px] shadow-sm mb-5 ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}>
-            <Text className={`text-2xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>Wallet</Text>
-            <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Choose Wallet:</Text>
+          <View style={tw`p-5 rounded-[10px] shadow-sm mb-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'}`}>
+            <Text style={tw`text-2xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              Wallet
+            </Text>
+            <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+              Choose Wallet:
+            </Text>
             <TouchableOpacity
-              className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
+              style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
               onPress={() =>
                 Alert.alert('Select Wallet', '', [
                   { text: 'DigiKoin', onPress: () => setWallet('digikoin') },
@@ -227,35 +251,31 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
               }
               accessibilityLabel="Select Wallet"
             >
-              <Text className={`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+              <Text style={tw`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
                 {wallet ? wallet.toUpperCase() : 'Select a wallet'}
               </Text>
             </TouchableOpacity>
 
-            <View className="flex-row justify-around mb-4">
-              <TouchableOpacity className="p-2 px-4 bg-[#050142] rounded-md" onPress={showDepositForm}>
-                <Text className="text-white text-base">Deposit</Text>
+            <View style={tw`flex-row justify-around mb-4`}>
+              <TouchableOpacity style={tw`p-2 px-4 bg-[#050142] rounded-md`} onPress={showDepositForm}>
+                <Text style={tw`text-white text-base`}>Deposit</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="p-2 px-4 bg-[#050142] rounded-md" onPress={showWithdrawForm}>
-                <Text className="text-white text-base">Withdraw</Text>
+              <TouchableOpacity style={tw`p-2 px-4 bg-[#050142] rounded-md`} onPress={showWithdrawForm}>
+                <Text style={tw`text-white text-base`}>Withdraw</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="p-2 px-4 bg-[#050142] rounded-md" onPress={showTransferForm}>
-                <Text className="text-white text-base">Transfer</Text>
+              <TouchableOpacity style={tw`p-2 px-4 bg-[#050142] rounded-md`} onPress={showTransferForm}>
+                <Text style={tw`text-white text-base`}>Transfer</Text>
               </TouchableOpacity>
             </View>
 
-            {error ? (
-              <Text className="text-red-600 mb-4 text-center" accessibilityRole="alert">
-                {error}
-              </Text>
-            ) : null}
-
             {/* Deposit Form */}
             {depositFormVisible && (
-              <View className="mt-4">
-                <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Deposit Amount:</Text>
+              <View style={tw`mt-4`}>
+                <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  Deposit Amount:
+                </Text>
                 <TextInput
-                  className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
+                  style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
                   placeholder="Enter amount"
                   placeholderTextColor={darkMode ? '#A0A0A0' : '#999'}
                   value={depositAmount}
@@ -263,23 +283,25 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                   keyboardType="numeric"
                   accessibilityLabel="Deposit Amount"
                 />
-                <TouchableOpacity className="p-3 bg-[#050142] rounded-md mb-4" onPress={deposit}>
-                  <Text className="text-white text-center text-base font-medium">Confirm Deposit</Text>
+                <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md mb-4`} onPress={deposit}>
+                  <Text style={tw`text-white text-center text-base font-medium`}>Confirm Deposit</Text>
                 </TouchableOpacity>
-                {depositConfirmation ? (
-                  <Text className="text-green-600 text-center" accessibilityRole="alert">
+                {depositConfirmation && (
+                  <Text style={tw`text-green-400 text-center`} accessibilityRole="alert">
                     {depositConfirmation}
                   </Text>
-                ) : null}
+                )}
               </View>
             )}
 
             {/* Withdraw Form */}
             {withdrawFormVisible && (
-              <View className="mt-4">
-                <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Withdraw Amount:</Text>
+              <View style={tw`mt-4`}>
+                <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  Withdraw Amount:
+                </Text>
                 <TextInput
-                  className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
+                  style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
                   placeholder="Enter amount"
                   placeholderTextColor={darkMode ? '#A0A0A0' : '#999'}
                   value={withdrawAmount}
@@ -287,23 +309,25 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                   keyboardType="numeric"
                   accessibilityLabel="Withdraw Amount"
                 />
-                <TouchableOpacity className="p-3 bg-[#050142] rounded-md mb-4" onPress={withdraw}>
-                  <Text className="text-white text-center text-base font-medium">Confirm Withdrawal</Text>
+                <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md mb-4`} onPress={withdraw}>
+                  <Text style={tw`text-white text-center text-base font-medium`}>Confirm Withdrawal</Text>
                 </TouchableOpacity>
-                {withdrawConfirmation ? (
-                  <Text className="text-green-600 text-center" accessibilityRole="alert">
+                {withdrawConfirmation && (
+                  <Text style={tw`text-green-400 text-center`} accessibilityRole="alert">
                     {withdrawConfirmation}
                   </Text>
-                ) : null}
+                )}
               </View>
             )}
 
             {/* Transfer Form */}
             {transferFormVisible && (
-              <View className="mt-4">
-                <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>From:</Text>
+              <View style={tw`mt-4`}>
+                <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  From:
+                </Text>
                 <TouchableOpacity
-                  className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
+                  style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
                   onPress={() =>
                     Alert.alert('Select Source Wallet', '', [
                       { text: 'DigiKoin', onPress: () => setTransferSource('digikoin') },
@@ -315,13 +339,15 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                   }
                   accessibilityLabel="Select Source Wallet"
                 >
-                  <Text className={`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
                     {transferSource ? transferSource.toUpperCase() : 'Select source wallet'}
                   </Text>
                 </TouchableOpacity>
-                <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>To:</Text>
+                <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  To:
+                </Text>
                 <TouchableOpacity
-                  className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
+                  style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
                   onPress={() =>
                     Alert.alert('Select Destination Wallet', '', [
                       { text: 'DigiKoin', onPress: () => setTransferDest('digikoin') },
@@ -333,13 +359,15 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                   }
                   accessibilityLabel="Select Destination Wallet"
                 >
-                  <Text className={`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
                     {transferDest ? transferDest.toUpperCase() : 'Select destination wallet'}
                   </Text>
                 </TouchableOpacity>
-                <Text className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Amount:</Text>
+                <Text style={tw`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  Amount:
+                </Text>
                 <TextInput
-                  className={`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
+                  style={tw`border p-2 rounded-md mb-4 ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white/80 text-[#454545]'}`}
                   placeholder="Enter amount"
                   placeholderTextColor={darkMode ? '#A0A0A0' : '#999'}
                   value={transferAmount}
@@ -347,36 +375,44 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                   keyboardType="numeric"
                   accessibilityLabel="Transfer Amount"
                 />
-                <TouchableOpacity className="p-3 bg-[#050142] rounded-md mb-4" onPress={transfer}>
-                  <Text className="text-white text-center text-base font-medium">Confirm Transfer</Text>
+                <TouchableOpacity style={tw`p-3 bg-[#050142] rounded-md mb-4`} onPress={transfer}>
+                  <Text style={tw`text-white text-center text-base font-medium`}>Confirm Transfer</Text>
                 </TouchableOpacity>
-                {transferConfirmation ? (
-                  <Text className="text-green-600 text-center" accessibilityRole="alert">
+                {transferConfirmation && (
+                  <Text style={tw`text-green-400 text-center`} accessibilityRole="alert">
                     {transferConfirmation}
                   </Text>
-                ) : null}
+                )}
               </View>
             )}
           </View>
 
           {/* Transaction History */}
-          <View className={`p-5 rounded-[10px] shadow-sm mb-5 ${darkMode ? 'bg-white/5' : 'bg-white/10'}`}>
-            <Text className={`text-2xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>Transaction History</Text>
+          <View style={tw`p-5 rounded-[10px] shadow-sm mb-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'}`}>
+            <Text style={tw`text-2xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              Transaction History
+            </Text>
             <FlatList
               data={transactions}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <View className="flex-row justify-between py-2 border-b border-gray-300">
-                  <Text className={`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>{item.date}</Text>
-                  <Text className={`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>{item.type}</Text>
-                  <Text className={`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>{item.amount}</Text>
+                <View style={tw`flex-row justify-between py-2 border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                  <Text style={tw`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    {item.date}
+                  </Text>
+                  <Text style={tw`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    {item.type}
+                  </Text>
+                  <Text style={tw`flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    {item.amount}
+                  </Text>
                   <Text
-                    className={`flex-1 text-center ${
+                    style={tw`flex-1 text-center ${
                       item.status === 'confirmed'
-                        ? 'text-green-600'
+                        ? 'text-green-400'
                         : item.status === 'pending'
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
+                        ? 'text-yellow-400'
+                        : 'text-red-400'
                     }`}
                   >
                     {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
@@ -384,11 +420,19 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
                 </View>
               )}
               ListHeaderComponent={() => (
-                <View className="flex-row justify-between py-2 border-b border-gray-300">
-                  <Text className={`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Date</Text>
-                  <Text className={`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Type</Text>
-                  <Text className={`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Amount</Text>
-                  <Text className={`font-bold flex-1 text-center ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>Status</Text>
+                <View style={tw`flex-row justify-between py-2 border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                  <Text style={tw`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    Date
+                  </Text>
+                  <Text style={tw`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    Type
+                  </Text>
+                  <Text style={tw`font-bold flex-1 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    Amount
+                  </Text>
+                  <Text style={tw`font-bold flex-1 text-center ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                    Status
+                  </Text>
                 </View>
               )}
             />

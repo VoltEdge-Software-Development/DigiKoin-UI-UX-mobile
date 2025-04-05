@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Linking, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
+import tw from 'twrnc'; 
 
 interface Metrics {
   tokenPrice: string;
@@ -45,11 +46,54 @@ interface AdminDashboardProps {
   setIsLoggedIn: (value: boolean) => void;
 }
 
+interface HeaderProps {
+  darkMode: boolean;
+  toggleMode: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
+  return (
+    <View
+      style={[
+        tw`w-full flex-row items-center justify-between p-5 shadow-md`,
+        { position: 'absolute', top: 0, left: 0, zIndex: 1000, minHeight: 70 },
+        darkMode ? tw`bg-[#333333]/95` : tw`bg-[#111111]/80`,
+        { elevation: 4 },
+      ]}
+    >
+      <Image
+        source={require('../assets/Gorilla.png')}
+        style={tw`w-[50px] h-[50px] ml-5`}
+        resizeMode="contain"
+        accessibilityLabel="DigiKoin Logo"
+      />
+      <Text
+        style={tw`text-[24px] font-bold flex-1 mr-auto ${
+          darkMode ? 'text-[#FFB84D]' : 'text-[#B36300]'
+        }`}
+      >
+        DigiKoin
+      </Text>
+      <Switch
+        value={darkMode}
+        onValueChange={toggleMode}
+        thumbColor={darkMode ? '#FFFFFF' : '#050142'}
+        trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
+        style={tw`mr-5`}
+        accessibilityLabel="Toggle Dark Mode"
+      />
+    </View>
+  );
+};
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ setIsLoggedIn }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AdminDashboard'>>();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  // Simulate fetching data (replace with real API call later)
+  const toggleMode = () => setDarkMode(prev => !prev);
+
   useEffect(() => {
     setTimeout(() => {
       setMetrics({
@@ -91,23 +135,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setIsLoggedIn }) => {
     }, 1000);
   }, []);
 
-  // Navigation handlers
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
   const handleInvestNow = () => navigation.navigate('BuySell');
   const handleViewWhitepaper = () => {
-    // Replace with real URL or bundled asset path
     Linking.openURL('https://example.com/whitepaper.pdf').catch(() =>
-      Alert.alert('Error', 'Unable to open whitepaper.')
+      setErrorMessage('Unable to open whitepaper.')
     );
   };
   const handleAuditReports = () => {
-    // Replace with real URL or bundled asset path
     Linking.openURL('https://example.com/audit-reports.pdf').catch(() =>
-      Alert.alert('Error', 'Unable to open audit reports.')
+      setErrorMessage('Unable to open audit reports.')
     );
   };
   const handleExplorer = () => {
     Linking.openURL('https://blockchain-explorer-url.com').catch(() =>
-      Alert.alert('Error', 'Unable to open blockchain explorer.')
+      setErrorMessage('Unable to open blockchain explorer.')
     );
   };
   const handleProfile = () => {
@@ -115,260 +163,358 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setIsLoggedIn }) => {
   };
 
   return (
-    <View className="flex-1 mt-[70px] p-7 bg-gray-200/85">
-      {/* Hero Section */}
-      <View className="p-10 bg-orange-50 rounded-[10px] mb-7 text-center">
-        <Text className="text-[32px] mb-2 text-[#050142] font-bold">
-          Invest in Gold-Backed Digital Assets with Confidence
-        </Text>
-        <Text className="text-lg mb-5 text-[#454545]">Real Gold. Real Value. Real Security.</Text>
-        <View className="flex-row justify-around flex-wrap gap-4 mb-5">
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            {/* Placeholder image; replace with real asset */}
-            <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-            <View>
-              <Text className="text-sm font-bold uppercase text-[#454545]">Current Token Price</Text>
-              <Text className="text-base font-medium">{metrics ? metrics.tokenPrice : 'Loading...'}</Text>
-              <Text className="text-xs text-gray-600">N/A</Text>
-            </View>
+    <View style={tw`flex-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-200/85'}`}>
+      <Header darkMode={darkMode} toggleMode={toggleMode} />
+      <View style={tw`flex-1 mt-[70px] p-7`}>
+        {errorMessage && (
+          <View style={tw`absolute top-10 left-0 right-0 z-10 p-4 mx-7 bg-red-500/90 rounded-md`}>
+            <Text style={tw`text-white text-center`}>{errorMessage}</Text>
           </View>
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-            <View>
-              <Text className="text-sm font-bold uppercase text-[#454545]">Total Gold Reserves</Text>
-              <Text className="text-base font-medium">{metrics ? metrics.goldReserves : 'Loading...'}</Text>
-              <Text className="text-xs text-gray-600">N/A</Text>
-            </View>
-          </View>
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/total-active-investors.png')} className="w-7 h-7 mr-3" />
-            <View>
-              <Text className="text-sm font-bold uppercase text-[#454545]">Total Active Investors</Text>
-              <Text className="text-base font-medium">{metrics ? metrics.activeInvestors : 'Loading...'}</Text>
-              <Text className="text-xs text-gray-600">N/A</Text>
-            </View>
-          </View>
-        </View>
-        <View className="flex-row justify-center gap-5">
-          <TouchableOpacity
-            className="p-2 px-5 bg-[#050142] rounded-md"
-            onPress={handleInvestNow}
-            accessibilityLabel="Invest Now in DigiKoin"
-          >
-            <Text className="text-white text-base">Invest Now</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="p-2 px-5 bg-[#050142] rounded-md"
-            onPress={handleViewWhitepaper}
-            accessibilityLabel="View Whitepaper PDF"
-          >
-            <Text className="text-white text-base">View Whitepaper</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        )}
 
-      {/* Dashboard Grid */}
-      <View className="flex-col gap-5">
-        {/* Gold Reserve Metrics */}
-        <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-          <Text className="text-2xl mb-5 text-[#454545] font-bold">Gold Reserve Metrics</Text>
-          <View className="flex-col gap-2.5">
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
+        <View style={tw`p-10 ${darkMode ? 'bg-gray-700' : 'bg-orange-50'} rounded-[10px] mb-7 text-center`}>
+          <Text style={tw`text-[32px] mb-2 ${darkMode ? 'text-white' : 'text-[#050142]'} font-bold`}>
+            Invest in Gold-Backed Digital Assets with Confidence
+          </Text>
+          <Text style={tw`text-lg mb-5 ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+            Real Gold. Real Value. Real Security.
+          </Text>
+          <View style={tw`flex-row justify-around flex-wrap gap-4 mb-5`}>
+            <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+              <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
               <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Total Gold Reserves</Text>
-                <Text className="text-base font-medium">
-                  {metrics ? `${metrics.goldReserves} (0.175 tons)` : 'Loading...'}
+                <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                  Current Token Price
                 </Text>
-                <Text className="text-xs text-gray-600">N/A</Text>
+                <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                  {metrics ? metrics.tokenPrice : 'Loading...'}
+                </Text>
+                <Text style={tw`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>N/A</Text>
               </View>
             </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
+            <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+              <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
               <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Vault Details</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.vaultDetails : 'Loading...'}</Text>
+                <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                  Total Gold Reserves
+                </Text>
+                <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                  {metrics ? metrics.goldReserves : 'Loading...'}
+                </Text>
+                <Text style={tw`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>N/A</Text>
               </View>
             </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
+            <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+              <Image source={require('../assets/total-active-investors.png')} style={tw`w-7 h-7 mr-3`} />
               <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Reserve Growth</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.reserveGrowth : 'Loading...'}</Text>
+                <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                  Total Active Investors
+                </Text>
+                <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                  {metrics ? metrics.activeInvestors : 'Loading...'}
+                </Text>
+                <Text style={tw`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>N/A</Text>
               </View>
             </View>
           </View>
-          <View className="h-[150px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-            <Text className="italic text-gray-600">Interactive Gold Reserve Map</Text>
-          </View>
-          <View className="h-[150px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-            <Text className="italic text-gray-600">Gold Reserve Growth Chart</Text>
-          </View>
-        </View>
-
-        {/* Token Performance */}
-        <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-          <Text className="text-2xl mb-5 text-[#454545] font-bold">Token Performance</Text>
-          <View className="flex-col gap-2.5">
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Market Cap</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.marketCap : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Tokens in Circulation</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.tokensInCirculation : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Trading Volume</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.tradingVolume : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Token Supply Cap</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.tokenSupplyCap : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/current-token-price.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Burned Tokens</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.burnedTokens : 'Loading...'}</Text>
-              </View>
-            </View>
+          <View style={tw`flex-row justify-center gap-5`}>
+            <TouchableOpacity
+              style={tw`p-2 px-5 bg-[#050142] rounded-md`}
+              onPress={handleInvestNow}
+              accessibilityLabel="Invest Now in DigiKoin"
+            >
+              <Text style={tw`text-white text-base`}>Invest Now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={tw`p-2 px-5 bg-[#050142] rounded-md`}
+              onPress={handleViewWhitepaper}
+              accessibilityLabel="View Whitepaper PDF"
+            >
+              <Text style={tw`text-white text-base`}>View Whitepaper</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Operational Metrics */}
-        <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-          <Text className="text-2xl mb-5 text-[#454545] font-bold">Operational Metrics</Text>
-          <View className="flex-col gap-2.5">
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Ore Grade</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.oreGrade : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Recovery Rate</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.recoveryRate : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Tonnes Mined</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.tonnesMined : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Energy & Water Usage</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.energyWater : 'Loading...'}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Compliance & Security */}
-        <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-          <Text className="text-2xl mb-5 text-[#454545] font-bold">Compliance & Security</Text>
-          <View className="flex-col gap-2.5">
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Audit Reports</Text>
-                <TouchableOpacity onPress={handleAuditReports}>
-                  <Text className="text-base font-medium text-blue-600">
-                    {metrics ? metrics.auditReports : 'Loading...'}
+        <View style={tw`flex-col gap-5`}>
+          <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+            <Text style={tw`text-2xl mb-5 ${darkMode ? 'text-white' : 'text-[#454545]'} font-bold`}>
+              Gold Reserve Metrics
+            </Text>
+            <View style={tw`flex-col gap-2.5`}>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Total Gold Reserves
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Smart Contract Audit</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.smartContractAudit : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">KYC Compliance</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.kycCompliance : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Insurance Coverage</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.insuranceCoverage : 'Loading...'}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Blockchain Explorer</Text>
-                <TouchableOpacity onPress={handleExplorer}>
-                  <Text className="text-base font-medium text-blue-600">
-                    {metrics ? metrics.blockchainExplorer : 'Loading...'}
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? `${metrics.goldReserves} (0.175 tons)` : 'Loading...'}
                   </Text>
-                </TouchableOpacity>
+                  <Text style={tw`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>N/A</Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Vault Details
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.vaultDetails : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Reserve Growth
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.reserveGrowth : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View style={tw`h-[150px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+              <Text style={tw`italic ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Interactive Gold Reserve Map</Text>
+            </View>
+            <View style={tw`h-[150px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+              <Text style={tw`italic ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Gold Reserve Growth Chart</Text>
+            </View>
+          </View>
+
+          <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+            <Text style={tw`text-2xl mb-5 ${darkMode ? 'text-white' : 'text-[#454545]'} font-bold`}>
+              Token Performance
+            </Text>
+            <View style={tw`flex-col gap-2.5`}>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Market Cap
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.marketCap : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Tokens in Circulation
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.tokensInCirculation : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Trading Volume
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.tradingVolume : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Token Supply Cap
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.tokenSupplyCap : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/current-token-price.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Burned Tokens
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.burnedTokens : 'Loading...'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Contact Info */}
-        <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-          <Text className="text-2xl mb-5 text-[#454545] font-bold">Contact Information</Text>
-          <View className="flex-col gap-2.5">
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Investor Contact</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.investorContact : 'Loading...'}</Text>
+          <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+            <Text style={tw`text-2xl mb-5 ${darkMode ? 'text-white' : 'text-[#454545]'} font-bold`}>
+              Operational Metrics
+            </Text>
+            <View style={tw`flex-col gap-2.5`}>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Ore Grade
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.oreGrade : 'Loading...'}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Support Contact</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.supportContact : 'Loading...'}</Text>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Recovery Rate
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.recoveryRate : 'Loading...'}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-              <Image source={require('../assets/total-gold-reserves.png')} className="w-7 h-7 mr-3" />
-              <View>
-                <Text className="text-sm font-bold uppercase text-[#454545]">Escalation</Text>
-                <Text className="text-base font-medium">{metrics ? metrics.escalation : 'Loading...'}</Text>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Tonnes Mined
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.tonnesMined : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Energy & Water Usage
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.energyWater : 'Loading...'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Profile Navigation (Admin-specific) */}
-        <TouchableOpacity
-          className="p-3 bg-[#050142] rounded-md mt-5"
-          onPress={handleProfile}
-          accessibilityLabel="View Admin Profile"
-        >
-          <Text className="text-white text-center text-base font-medium">View Profile</Text>
-        </TouchableOpacity>
+          <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+            <Text style={tw`text-2xl mb-5 ${darkMode ? 'text-white' : 'text-[#454545]'} font-bold`}>
+              Compliance & Security
+            </Text>
+            <View style={tw`flex-col gap-2.5`}>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Audit Reports
+                  </Text>
+                  <TouchableOpacity onPress={handleAuditReports}>
+                    <Text style={tw`text-base font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                      {metrics ? metrics.auditReports : 'Loading...'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Smart Contract Audit
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.smartContractAudit : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    KYC Compliance
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.kycCompliance : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Insurance Coverage
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.insuranceCoverage : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Blockchain Explorer
+                  </Text>
+                  <TouchableOpacity onPress={handleExplorer}>
+                    <Text style={tw`text-base font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                      {metrics ? metrics.blockchainExplorer : 'Loading...'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+            <Text style={tw`text-2xl mb-5 ${darkMode ? 'text-white' : 'text-[#454545]'} font-bold`}>
+              Contact Information
+            </Text>
+            <View style={tw`flex-col gap-2.5`}>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Investor Contact
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.investorContact : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Support Contact
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.supportContact : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+              <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+                <Image source={require('../assets/total-gold-reserves.png')} style={tw`w-7 h-7 mr-3`} />
+                <View>
+                  <Text style={tw`text-sm font-bold uppercase ${darkMode ? 'text-gray-200' : 'text-[#454545]'}`}>
+                    Escalation
+                  </Text>
+                  <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {metrics ? metrics.escalation : 'Loading...'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={tw`p-3 bg-[#050142] rounded-md mt-5`}
+            onPress={handleProfile}
+            accessibilityLabel="View Admin Profile"
+          >
+            <Text style={tw`text-white text-center text-base font-medium`}>View Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

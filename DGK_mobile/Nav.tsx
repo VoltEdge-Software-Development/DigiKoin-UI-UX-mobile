@@ -4,12 +4,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList, NavProps } from './types';
+import tw from 'twrnc';
 
-const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType }) => {
+const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Nav'>>();
   const route = useRoute();
 
-  // Base navigation items for all users
+  // Base navigation items for all users (some filtered later for minors)
   const baseNavItems = [
     {
       name: 'Home',
@@ -20,33 +21,36 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType }) => {
           ? 'InvestorDashboard'
           : 'MinorDashboard',
     },
-    { name: 'Buy/Sell', route: 'BuySell' }, // Only visible to investors/admins
-    { name: 'Wallet', route: 'Wallet' },
-    { name: 'Gold Storage', route: 'GoldStorage' },
+    { name: 'Buy/Sell', route: 'BuySell' }, // Only for investors/admins
+    { name: 'Wallet', route: 'Wallet' },     // Only for investors/admins
+    { name: 'Gold Storage', route: 'GoldStorage' }, // Only for investors/admins
     { name: 'Profile', route: 'Profile' },
     { name: 'FAQ', route: 'FAQ' },
+    // 'Terms' removed from here
   ];
 
-  // Minor-specific items
-  const minorNavItems = [
+  // Educational and community items for minors and admins
+  const educationalNavItems = [
     { name: 'How DigiKoin Works', route: 'EducationalContent' },
     { name: 'Community', route: 'CommunityEngagement' },
   ];
 
-  // Admin-specific items
-  const adminNavItems = [{ name: 'Terms', route: 'Terms' }];
-
   // Combine items based on userType
   const navItems =
     userType === 'admin'
-      ? [...baseNavItems, ...adminNavItems] // Admins see base + Terms
+      ? [...baseNavItems, ...educationalNavItems] // Admins see base + educational items
       : userType === 'investor'
-      ? baseNavItems // Investors see full base
-      : [...baseNavItems.filter((item) => item.name !== 'Buy/Sell'), ...minorNavItems]; // Minors exclude Buy/Sell, add minor items
+      ? baseNavItems // Investors see only base items
+      : [
+          ...baseNavItems.filter(
+            (item) => !['Buy/Sell', 'Wallet', 'Gold Storage'].includes(item.name)
+          ), // Minors exclude Buy/Sell, Wallet, Gold Storage
+          ...educationalNavItems, // Minors include educational items
+        ];
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(['userType', 'isLoggedIn', 'kycVerified']);
+      await AsyncStorage.multiRemove(['userType', 'isLoggedIn', 'kycVerified', 'darkMode']);
       setIsLoggedIn(false);
       navigation.navigate('Welcome');
     } catch (error) {
@@ -56,31 +60,28 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType }) => {
 
   return (
     <View
-      className={`w-full p-3 flex-row justify-between items-center shadow-md fixed bottom-0 left-0 z-[1000] ${
-        darkMode ? 'bg-[#333333]/95' : 'bg-[#111111]/80'
-      }`}
-      style={{ elevation: 4 }}
+      style={[
+        tw`w-full p-3 flex-row justify-between items-center shadow-md`,
+        { position: 'absolute', bottom: 0, left: 0, zIndex: 1000 },
+        darkMode ? tw`bg-[#333333]/95` : tw`bg-[#111111]/80`,
+        { elevation: 4 },
+      ]}
     >
-      <View className="flex-row flex-wrap justify-around flex-1">
+      <View style={tw`flex-row flex-wrap justify-around flex-1`}>
         {navItems.map((item) => (
           <TouchableOpacity
             key={item.route}
-            className={`p-2 rounded-md ${
-              route.name === item.route
-                ? darkMode
-                  ? 'bg-white/30'
-                  : 'bg-white/20'
-                : ''
-            }`}
+            style={tw`p-2 rounded-md ${route.name === item.route ? (darkMode ? 'bg-white/30' : 'bg-white/20') : ''}`}
             onPress={() =>
               item.route === 'Profile'
                 ? navigation.navigate('Profile', { setIsLoggedIn })
-                : navigation.navigate(item.route as keyof RootStackParamList)}
+                : navigation.navigate(item.route as keyof RootStackParamList)
+            }
             accessibilityLabel={`Navigate to ${item.name}`}
             activeOpacity={0.7}
           >
             <Text
-              className={`text-sm font-medium ${
+              style={tw`text-sm font-medium ${
                 darkMode
                   ? route.name === item.route
                     ? 'text-white'
@@ -96,14 +97,12 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType }) => {
         ))}
       </View>
       <TouchableOpacity
-        className={`p-2 rounded-md ${darkMode ? 'bg-[#ff8080]/20' : 'bg-[#ff4d4d]/20'}`}
+        style={tw`p-2 rounded-md ${darkMode ? 'bg-[#ff8080]/20' : 'bg-[#ff4d4d]/20'}`}
         onPress={handleLogout}
         accessibilityLabel="Log Out"
         activeOpacity={0.7}
       >
-        <Text
-          className={`text-sm font-medium ${darkMode ? 'text-[#ff8080]' : 'text-[#ff4d4d]'}`}
-        >
+        <Text style={tw`text-sm font-medium ${darkMode ? 'text-[#ff8080]' : 'text-[#ff4d4d]'}`}>
           Logout
         </Text>
       </TouchableOpacity>

@@ -1,17 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 import Nav from './Nav';
+import tw from 'twrnc';
 
-// Define props interface
+interface HeaderProps {
+  darkMode: boolean;
+  toggleMode: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
+  return (
+    <View
+      style={[
+        tw`w-full flex-row items-center justify-between p-5 shadow-md`,
+        { position: 'absolute', top: 0, left: 0, zIndex: 1000, minHeight: 70 },
+        darkMode ? tw`bg-[#333333]/95` : tw`bg-[#111111]/80`,
+        { elevation: 4 },
+      ]}
+    >
+      <Image
+        source={require('../assets/Gorilla.png')}
+        style={tw`w-[50px] h-[50px] ml-5`}
+        resizeMode="contain"
+        accessibilityLabel="DigiKoin Logo"
+      />
+      <Text
+        style={tw`text-[24px] font-bold flex-1 mr-auto ${darkMode ? 'text-[#FFB84D]' : 'text-[#B36300]'}`}
+      >
+        DigiKoin
+      </Text>
+      <Switch
+        value={darkMode}
+        onValueChange={toggleMode}
+        thumbColor={darkMode ? '#FFFFFF' : '#050142'}
+        trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
+        style={tw`mr-5`}
+        accessibilityLabel="Toggle Dark Mode"
+      />
+    </View>
+  );
+};
+
 interface GoldStorageProps {
   setIsLoggedIn: (value: boolean) => void;
   userType: 'minor' | 'investor' | 'admin' | null;
 }
 
-// Define metrics interface
 interface Metrics {
   oreProcessed: string;
   goldExtracted: string;
@@ -47,9 +84,12 @@ interface Metrics {
 const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'GoldStorage'>>();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const toggleMode = () => setDarkMode(prev => !prev);
 
   useEffect(() => {
-    // Simulate fetching data
     setTimeout(() => {
       setMetrics({
         oreProcessed: '500 tons',
@@ -85,211 +125,266 @@ const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType }) =>
     }, 1000);
   }, []);
 
-  const handleViewWallet = () => navigation.navigate('Wallet');
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  const handleViewWallet = () => {
+    try {
+      navigation.navigate('Wallet');
+    } catch (error) {
+      setErrorMessage('Failed to navigate to Wallet.');
+    }
+  };
 
   return (
-    <View className="flex-1 bg-gray-200/85">
-      <ScrollView className="flex-1">
-        <View className="mt-[70px] p-5">
+    <View style={tw`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
+      <Header darkMode={darkMode} toggleMode={toggleMode} />
+      <ScrollView style={tw`flex-1`}>
+        <View style={tw`mt-[70px] p-5`}>
+          {errorMessage && (
+            <View style={tw`absolute top-10 left-0 right-0 z-10 p-4 mx-7 bg-red-500/90 rounded-md`}>
+              <Text style={tw`text-white text-center`}>{errorMessage}</Text>
+            </View>
+          )}
+
           {/* Dashboard Grid */}
-          <View className="flex-col gap-5">
+          <View style={tw`flex-col gap-5`}>
             {/* 1. Gold Production & Processing Data */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Gold Production & Processing</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Ore Weight Processed:</Text>{' '}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Gold Production & Processing
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Ore Weight Processed:</Text>{' '}
                   {metrics?.oreProcessed ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Gold Extracted:</Text> {metrics?.goldExtracted ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Gold Extracted:</Text> {metrics?.goldExtracted ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Gold Purity Levels:</Text> {metrics?.goldPurity ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Gold Purity Levels:</Text> {metrics?.goldPurity ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Processing Efficiency:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Processing Efficiency:</Text>{' '}
                   {metrics?.processingEfficiency ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Processing Throughput Chart</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Processing Throughput Chart
+                </Text>
               </View>
             </View>
 
             {/* 2. Environmental & Site Conditions */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Environmental Conditions</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Temperature:</Text> {metrics?.temperature ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Environmental Conditions
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Temperature:</Text> {metrics?.temperature ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Dust Levels:</Text> {metrics?.dustLevels ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Dust Levels:</Text> {metrics?.dustLevels ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Water Usage:</Text> {metrics?.waterUsage ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Water Usage:</Text> {metrics?.waterUsage ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Water pH:</Text> {metrics?.waterPH ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Water pH:</Text> {metrics?.waterPH ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Environmental Trends Graph</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Environmental Trends Graph
+                </Text>
               </View>
             </View>
 
             {/* 3. Equipment & Machinery Monitoring */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Equipment Monitoring</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Machine Uptime:</Text> {metrics?.machineUptime ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Equipment Monitoring
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Machine Uptime:</Text> {metrics?.machineUptime ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Motor RPM:</Text> {metrics?.motorRPM ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Motor RPM:</Text> {metrics?.motorRPM ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Power Consumption:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Power Consumption:</Text>{' '}
                   {metrics?.powerConsumption ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Maintenance Alert:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Maintenance Alert:</Text>{' '}
                   {metrics?.maintenanceAlert ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Equipment Status Dashboard</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Equipment Status Dashboard
+                </Text>
               </View>
             </View>
 
             {/* 4. Security & Logistics Tracking */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Security & Logistics</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Gold Transport:</Text> {metrics?.goldTransport ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Security & Logistics
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Gold Transport:</Text> {metrics?.goldTransport ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Perimeter Status:</Text> {metrics?.perimeterStatus ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Perimeter Status:</Text> {metrics?.perimeterStatus ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Personnel:</Text> {metrics?.personnel ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Personnel:</Text> {metrics?.personnel ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Transport Tracking Map</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Transport Tracking Map
+                </Text>
               </View>
             </View>
 
             {/* 5. Financial & Market Insight */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Financial Insight</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Live Gold Price:</Text> {metrics?.goldPrice ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Financial Insight
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Live Gold Price:</Text> {metrics?.goldPrice ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Gold Inventory:</Text> {metrics?.goldInventory ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Gold Inventory:</Text> {metrics?.goldInventory ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Estimated Revenue:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Estimated Revenue:</Text>{' '}
                   {metrics?.estimatedRevenue ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Market Price Trend</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Market Price Trend
+                </Text>
               </View>
             </View>
 
             {/* 6. Compliance & Safety Metrics */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Compliance & Safety</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Safety Alerts:</Text> {metrics?.safetyAlerts ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Compliance & Safety
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Safety Alerts:</Text> {metrics?.safetyAlerts ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Emissions:</Text> {metrics?.emissions ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Emissions:</Text> {metrics?.emissions ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Compliance Rate:</Text> {metrics?.complianceRate ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Compliance Rate:</Text> {metrics?.complianceRate ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Safety Dashboard</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Safety Dashboard
+                </Text>
               </View>
             </View>
 
             {/* 7. Mining Operations Data */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Mining Operations</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Mining Output:</Text> {metrics?.miningOutput ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Mining Operations
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Mining Output:</Text> {metrics?.miningOutput ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Energy Consumption:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Energy Consumption:</Text>{' '}
                   {metrics?.energyConsumption ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Carbon Footprint:</Text> {metrics?.carbonFootprint ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Carbon Footprint:</Text> {metrics?.carbonFootprint ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Output Trends Graph</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Output Trends Graph
+                </Text>
               </View>
             </View>
 
             {/* 8. Blockchain and Currency Data */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">Blockchain Data</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Currency Supply:</Text> {metrics?.currencySupply ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                Blockchain Data
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Currency Supply:</Text> {metrics?.currencySupply ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Gold-to-Currency Ratio:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Gold-to-Currency Ratio:</Text>{' '}
                   {metrics?.goldToCurrencyRatio ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Transaction Volume:</Text>{' '}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Transaction Volume:</Text>{' '}
                   {metrics?.transactionVolume ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Transaction Volume Chart</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Transaction Volume Chart
+                </Text>
               </View>
             </View>
 
             {/* 9. User-Facing Features */}
-            <View className="p-5 bg-white/10 rounded-[10px] shadow-sm mb-5">
-              <Text className="text-2xl font-bold text-[#454545] mb-3">User Features</Text>
-              <View className="flex-col gap-2">
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Camera Feeds:</Text> {metrics?.cameraFeeds ?? 'Loading...'}
+            <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] shadow-sm mb-5`}>
+              <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+                User Features
+              </Text>
+              <View style={tw`flex-col gap-2`}>
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Camera Feeds:</Text> {metrics?.cameraFeeds ?? 'Loading...'}
                 </Text>
-                <Text className="text-lg text-[#454545]">
-                  <Text className="font-bold">Notifications:</Text> {metrics?.notifications ?? 'Loading...'}
+                <Text style={tw`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'}`}>
+                  <Text style={tw`font-bold`}>Notifications:</Text> {metrics?.notifications ?? 'Loading...'}
                 </Text>
               </View>
-              <View className="h-[100px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-                <Text className="italic text-gray-600">Historical Data Trends</Text>
+              <View style={tw`h-[100px] ${darkMode ? 'bg-gray-600' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+                <Text style={tw`italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Historical Data Trends
+                </Text>
               </View>
               <TouchableOpacity
-                className="p-3 bg-[#050142] rounded-md mt-4"
+                style={tw`p-3 bg-[#050142] rounded-md mt-4`}
                 onPress={handleViewWallet}
                 accessibilityLabel="View Wallet Balances"
               >
-                <Text className="text-white text-center text-base font-medium">View Wallet</Text>
+                <Text style={tw`text-white text-center text-base font-medium`}>View Wallet</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Navigation Bar */}
-      <Nav darkMode={false} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
     </View>
   );
 };

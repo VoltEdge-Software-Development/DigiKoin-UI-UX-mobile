@@ -1,87 +1,78 @@
-export interface LoginProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
+import { Dispatch, SetStateAction } from 'react';
 
-export interface NavProps {
+// Base props shared across most components
+interface BaseProps {
+  setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
   darkMode: boolean;
-  setIsLoggedIn: (value: boolean) => void;
+  toggleMode: () => Promise<void>;
+}
+
+// Component-specific prop interfaces
+export interface LoginProps extends BaseProps {}
+
+export interface NavProps extends BaseProps {
   userType: 'minor' | 'investor' | 'admin' | null;
 }
 
-export interface WelcomeProps {
-  setIsLoggedIn: (value: boolean) => void;
+export interface WelcomeProps extends BaseProps {}
+
+export interface SignUpProps extends BaseProps {}
+
+export interface AdminDashboardProps extends BaseProps {}
+
+export interface InvestorDashboardProps extends BaseProps {}
+
+export interface MinorDashboardProps extends BaseProps {}
+
+export interface EducationalContentProps extends BaseProps {}
+
+export interface CommunityEngagementProps extends BaseProps {}
+
+export interface BuySellProps extends BaseProps {
+  userType: 'investor' | 'admin' | null; // Excludes 'minor'
 }
 
-export interface SignUpProps {
-  setIsLoggedIn: (value: boolean) => void;
+export interface GoldStorageProps extends BaseProps {
+  userType: 'investor' | 'admin' | null; // Excludes 'minor'
 }
 
-export interface AdminDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
+export interface WalletProps extends BaseProps {
+  userType: 'investor' | 'admin' | null; // Excludes 'minor'
 }
 
-export interface InvestorDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
-export interface MinorDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
-export interface EducationalContentProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
-export interface CommunityEngagementProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
-export interface BuySellProps {
-  setIsLoggedIn: (value: boolean) => void;
+export interface ProfileProps extends BaseProps {
   userType: 'minor' | 'investor' | 'admin' | null;
-}
-
-export interface GoldStorageProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-}
-
-export interface WalletProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
-
-export interface ProfileProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
 }
 
 export interface ResetPasswordProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => Promise<void>;
 }
 
+export interface FAQProps extends BaseProps {
+  userType: 'minor' | 'investor' | 'admin' | null;
+}
+
+export interface KYCProps extends BaseProps {}
+
+// Updated RootStackParamList to match prop interfaces
 export type RootStackParamList = {
-  Welcome: undefined;
+  Welcome: WelcomeProps;
   Login: LoginProps;
-  SignUp: undefined;
-  ResetPassword: undefined;
-  KYC: { setIsLoggedIn: (value: boolean) => void };
-  AdminDashboard: undefined;
-  InvestorDashboard: undefined;
-  MinorDashboard: undefined;
-  EducationalContent: undefined;
-  CommunityEngagement: undefined;
-  BuySell: undefined;
-  Wallet: undefined;
-  GoldStorage: undefined;
-  Profile: { setIsLoggedIn: (value: boolean) => void };
-  FAQ: undefined;
+  SignUp: SignUpProps;
+  ResetPassword: ResetPasswordProps;
+  KYC: KYCProps;
+  AdminDashboard: AdminDashboardProps;
+  InvestorDashboard: InvestorDashboardProps;
+  MinorDashboard: MinorDashboardProps;
+  EducationalContent: EducationalContentProps;
+  CommunityEngagement: CommunityEngagementProps;
+  BuySell: BuySellProps;
+  Wallet: WalletProps;
+  GoldStorage: GoldStorageProps;
+  Profile: ProfileProps;
+  FAQ: FAQProps;
   Terms: undefined;
   Logout: undefined;
-  Nav: undefined;
+  Nav: NavProps;
 };
