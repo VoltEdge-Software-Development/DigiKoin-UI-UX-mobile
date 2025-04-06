@@ -84,13 +84,13 @@ const App: React.FC = () => {
     return null;
   };
 
-  type ProtectedRouteProps = StackScreenProps<RootStackParamList> & {
+  type ProtectedRouteProps<K extends keyof RootStackParamList> = StackScreenProps<RootStackParamList, K> & {
     component: React.ComponentType<any>;
   };
 
-  const ProtectedRoute = ({ component: Component, ...props }: ProtectedRouteProps) => {
+  const ProtectedRoute = <K extends keyof RootStackParamList>({ component: Component, ...props }: ProtectedRouteProps<K>) => {
     if (!isLoggedIn || !kycVerified) {
-      return <Login {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+      return <Login {...(props as StackScreenProps<RootStackParamList, 'Login'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
     }
 
     const allowedMinorAndAdminRoutes = ['MinorDashboard', 'EducationalContent', 'CommunityEngagement'];
@@ -100,28 +100,45 @@ const App: React.FC = () => {
       return <Text style={{ color: darkMode ? '#fff' : '#000' }}>You do not have access to this page.</Text>;
     }
 
-    return <Component {...props} userType={userType} />;
+    return (
+      <Component
+        {...props}
+        setIsLoggedIn={setIsLoggedIn}
+        darkMode={darkMode}
+        toggleMode={toggleMode}
+        userType={userType}
+      />
+    );
   };
 
-  type PublicRouteProps = StackScreenProps<RootStackParamList> & {
+  type PublicRouteProps<K extends keyof RootStackParamList> = StackScreenProps<RootStackParamList, K> & {
     component: React.ComponentType<any>;
     restricted?: boolean;
   };
 
-  const PublicRoute = ({ component: Component, restricted, ...props }: PublicRouteProps) => {
+  const PublicRoute = <K extends keyof RootStackParamList>({ component: Component, restricted, ...props }: PublicRouteProps<K>) => {
     if (restricted && isLoggedIn && kycVerified) {
       if (userType === 'admin') {
-        return <AdminDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <AdminDashboard {...(props as StackScreenProps<RootStackParamList, 'AdminDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       } else if (userType === 'investor') {
-        return <InvestorDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <InvestorDashboard {...(props as StackScreenProps<RootStackParamList, 'InvestorDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       } else if (userType === 'minor') {
-        return <MinorDashboard {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return <MinorDashboard {...(props as StackScreenProps<RootStackParamList, 'MinorDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
       }
     }
-    return <Component {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+    return (
+      <Component
+        {...props}
+        setIsLoggedIn={setIsLoggedIn}
+        darkMode={darkMode}
+        toggleMode={toggleMode}
+      />
+    );
   };
 
-  const HomeRoute: React.FC<StackScreenProps<RootStackParamList, 'Welcome'>> = ({ navigation }) => {
+  const HomeRoute: React.FC<StackScreenProps<RootStackParamList, 'Welcome'>> = (props) => {
+    const { navigation } = props;
+
     useEffect(() => {
       if (isLoggedIn && kycVerified) {
         if (userType === 'admin') {
@@ -134,7 +151,7 @@ const App: React.FC = () => {
       }
     }, [navigation, isLoggedIn, kycVerified, userType]);
 
-    return <Welcome navigation={navigation} route={{} as any} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+    return <Welcome {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
   };
 
   return (
@@ -165,14 +182,14 @@ const App: React.FC = () => {
         <Stack.Screen
           name="ResetPassword"
           component={(props: StackScreenProps<RootStackParamList, 'ResetPassword'>) => (
-            <ResetPassword navigation={props.navigation} route={props.route} darkMode={darkMode} toggleMode={toggleMode} />
+            <ResetPassword {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />
           )}
           options={{ headerShown: false }}
         />
         <Stack.Screen
           name="KYC"
           component={(props: StackScreenProps<RootStackParamList, 'KYC'>) => (
-            <KYC navigation={props.navigation} route={props.route} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />
+            <KYC {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />
           )}
         />
         <Stack.Screen
@@ -265,7 +282,7 @@ const App: React.FC = () => {
         <Stack.Screen
           name="Nav"
           component={(props: StackScreenProps<RootStackParamList, 'Nav'>) => (
-            <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} {...props} />
+            <Nav {...props} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} userType={userType} />
           )}
           options={{ headerShown: false }}
         />

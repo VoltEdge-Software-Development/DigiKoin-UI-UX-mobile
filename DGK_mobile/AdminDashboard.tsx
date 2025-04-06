@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Linking, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
-import tw from 'twrnc'; 
+import { RootStackParamList, AdminDashboardProps } from './types'; // Import from types.ts
+import tw from 'twrnc';
 
 interface Metrics {
   tokenPrice: string;
@@ -42,13 +42,9 @@ interface Metrics {
   escalation: string;
 }
 
-interface AdminDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => void; // Match App.tsx’s sync toggleMode for Header
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -86,13 +82,10 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
   );
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ setIsLoggedIn }) => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AdminDashboard'>>();
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigation, setIsLoggedIn, darkMode, toggleMode }) => {
+  // Note: Removed local darkMode state and toggleMode to use props from App.tsx
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-
-  const toggleMode = () => setDarkMode(prev => !prev);
 
   useEffect(() => {
     setTimeout(() => {
