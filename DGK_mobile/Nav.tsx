@@ -21,9 +21,9 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
           ? 'InvestorDashboard'
           : 'MinorDashboard',
     },
-    { name: 'Buy/Sell', route: 'BuySell' }, // Only for investors/admins
-    { name: 'Wallet', route: 'Wallet' }, // Only for investors/admins
-    { name: 'Gold Storage', route: 'GoldStorage' }, // Only for investors/admins
+    { name: 'Buy/Sell', route: 'BuySell' },
+    { name: 'Wallet', route: 'Wallet' },
+    { name: 'Gold Storage', route: 'GoldStorage' },
     { name: 'Profile', route: 'Profile' },
     { name: 'FAQ', route: 'FAQ' },
   ];
@@ -37,14 +37,14 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
   // Combine items based on userType
   const navItems =
     userType === 'admin'
-      ? [...baseNavItems, ...educationalNavItems] // Admins see base + educational items
+      ? [...baseNavItems, ...educationalNavItems]
       : userType === 'investor'
-      ? baseNavItems // Investors see only base items
+      ? baseNavItems
       : [
           ...baseNavItems.filter(
             (item) => !['Buy/Sell', 'Wallet', 'Gold Storage'].includes(item.name)
-          ), // Minors exclude Buy/Sell, Wallet, Gold Storage
-          ...educationalNavItems, // Minors include educational items
+          ),
+          ...educationalNavItems,
         ];
 
   const handleLogout = async () => {
@@ -98,7 +98,6 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
       case 'FAQ':
         navigation.navigate('FAQ', { setIsLoggedIn, userType, darkMode, toggleMode });
         break;
-      // No default case needed since all navItems routes are handled
     }
   };
 

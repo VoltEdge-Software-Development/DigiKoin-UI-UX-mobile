@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Linking, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, InvestorDashboardProps } from './types'; // Import from types.ts
+import { RootStackParamList, InvestorDashboardProps } from './types';
 import tw from 'twrnc';
 
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => Promise<void>; // Match App.tsx's async toggleMode
+  toggleMode: () => Promise<void>;
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {

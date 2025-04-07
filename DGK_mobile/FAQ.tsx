@@ -2,22 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList, FAQProps } from './types'; // Import FAQProps from types.ts
 import Header from './Header';
 import Nav from './Nav';
-
-interface FAQProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
+import tw from 'twrnc';
 
 interface FAQSection {
   title: string;
   questions: { question: string; answer: string[] }[];
 }
 
+// Use FAQProps from types.ts
 const FAQ: React.FC<FAQProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'FAQ'>>();
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
@@ -505,7 +500,7 @@ const FAQ: React.FC<FAQProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode
           ))}
         </View>
       </ScrollView>
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };

@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, GoldStorageProps } from './types'; // Import GoldStorageProps from types.ts
+import { RootStackParamList, GoldStorageProps } from './types';
 import Nav from './Nav';
 import tw from 'twrnc';
 
 // HeaderProps should match the async toggleMode from types.ts
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => Promise<void>; // Updated to Promise<void>
+  toggleMode: () => Promise<void>;
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
       </Text>
       <Switch
         value={darkMode}
-        onValueChange={toggleMode} // toggleMode is async, but Switch handles it fine
+        onValueChange={toggleMode}
         thumbColor={darkMode ? '#FFFFFF' : '#050142'}
         trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
         style={tw`mr-5`}

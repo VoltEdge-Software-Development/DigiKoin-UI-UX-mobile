@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Linking, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, MinorDashboardProps } from './types'; // Import MinorDashboardProps from types.ts
+import { RootStackParamList, MinorDashboardProps } from './types';
 import Nav from './Nav';
 import Header from './Header';
 import tw from 'twrnc';
 
 // Use MinorDashboardProps from types.ts
-const MinorDashboard: React.FC<MinorDashboardProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {
+const MinorDashboard: React.FC<MinorDashboardProps> = ({ setIsLoggedIn, darkMode, toggleMode, }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'MinorDashboard'>>();
   const [features, setFeatures] = useState<{
     goldBackedSecurity: string;

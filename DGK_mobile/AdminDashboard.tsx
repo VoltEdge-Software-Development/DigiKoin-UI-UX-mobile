@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Linking, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, AdminDashboardProps } from './types'; // Import from types.ts
-import Nav from './Nav'; // Added Nav import
+import { RootStackParamList, AdminDashboardProps } from './types';
+import Nav from './Nav';
 import tw from 'twrnc';
 
 interface Metrics {
@@ -45,7 +45,7 @@ interface Metrics {
 
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => Promise<void>; // Updated to match types.ts
+  toggleMode: () => Promise<void>;
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
       </Text>
       <Switch
         value={darkMode}
-        onValueChange={toggleMode} // toggleMode is async, but Switch handles it fine
+        onValueChange={toggleMode} 
         thumbColor={darkMode ? '#FFFFFF' : '#050142'}
         trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
         style={tw`mr-5`}
