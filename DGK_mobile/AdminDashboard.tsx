@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, Linking, Switch } from 'react-nati
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, AdminDashboardProps } from './types'; // Import from types.ts
+import Nav from './Nav'; // Added Nav import
 import tw from 'twrnc';
 
 interface Metrics {
@@ -44,7 +45,7 @@ interface Metrics {
 
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void; // Match App.tsx’s sync toggleMode for Header
+  toggleMode: () => Promise<void>; // Updated to match types.ts
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -72,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
       </Text>
       <Switch
         value={darkMode}
-        onValueChange={toggleMode}
+        onValueChange={toggleMode} // toggleMode is async, but Switch handles it fine
         thumbColor={darkMode ? '#FFFFFF' : '#050142'}
         trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
         style={tw`mr-5`}
@@ -82,8 +83,8 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
   );
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigation, setIsLoggedIn, darkMode, toggleMode }) => {
-  // Note: Removed local darkMode state and toggleMode to use props from App.tsx
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ setIsLoggedIn, darkMode, toggleMode, userType }) => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AdminDashboard'>>();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -135,7 +136,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigation, setIsLogged
     }
   }, [errorMessage]);
 
-  const handleInvestNow = () => navigation.navigate('BuySell');
+  const handleInvestNow = () => {
+    navigation.navigate('BuySell', { setIsLoggedIn, userType: 'admin' as const, darkMode, toggleMode });
+  };
   const handleViewWhitepaper = () => {
     Linking.openURL('https://example.com/whitepaper.pdf').catch(() =>
       setErrorMessage('Unable to open whitepaper.')
@@ -152,7 +155,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigation, setIsLogged
     );
   };
   const handleProfile = () => {
-    navigation.navigate('Profile', { setIsLoggedIn });
+    navigation.navigate('Profile', { setIsLoggedIn, userType, darkMode, toggleMode });
   };
 
   return (
@@ -509,6 +512,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigation, setIsLogged
           </TouchableOpacity>
         </View>
       </View>
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };

@@ -2,17 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, FlatList, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList, WalletProps } from './types';
 import Header from './Header';
 import Nav from './Nav';
 import tw from 'twrnc';
-
-interface WalletProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
 
 interface WalletBalances {
   digikoin: string;
@@ -29,6 +22,7 @@ interface Transaction {
   status: 'confirmed' | 'pending' | 'failed';
 }
 
+// Use WalletProps from types.ts, which includes toggleMode: () => Promise<void>
 const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Wallet'>>();
   type WalletKey = keyof WalletBalances;
@@ -439,7 +433,7 @@ const Wallet: React.FC<WalletProps> = ({ setIsLoggedIn, userType, darkMode, togg
           </View>
         </View>
       </ScrollView>
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };

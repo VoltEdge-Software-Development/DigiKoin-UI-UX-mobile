@@ -4,21 +4,18 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
-import { RootStackParamList } from './types';
+import { RootStackParamList, KYCProps } from './types';
+import tw from 'twrnc';
 
 interface Message {
   text: string;
   type: 'success' | 'error' | '';
 }
 
-interface KYCProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
-
 // Define Header props type
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => Promise<void>;
 }
 
 // Header Component
@@ -32,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
     >
       <Image
         source={require('../assets/Gorilla.png')}
-        className="w-[50px] h-[50px] ml-5"
+        style={tw`w-[50px] h-[50px] ml-5`}
         resizeMode="contain"
         accessibilityLabel="DigiKoin Logo"
       />
@@ -55,14 +52,11 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
   );
 };
 
-const KYC: React.FC<KYCProps> = ({ setIsLoggedIn }) => {
+const KYC: React.FC<KYCProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {
   const [govID, setGovID] = useState<string | null>(null);
   const [facialRec, setFacialRec] = useState<string | null>(null);
   const [message, setMessage] = useState<Message>({ text: '', type: '' });
-  const [darkMode, setDarkMode] = useState<boolean>(false);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'KYC'>>();
-
-  const toggleMode = () => setDarkMode(prev => !prev);
 
   const requestPermissions = async (type: 'govID' | 'facialRec') => {
     try {
@@ -109,7 +103,7 @@ const KYC: React.FC<KYCProps> = ({ setIsLoggedIn }) => {
       {
         mediaType: 'photo',
         quality: 1,
-        includeBase64: false, 
+        includeBase64: false,
       },
       (response: ImagePickerResponse) => {
         if (response.didCancel) {
@@ -143,14 +137,14 @@ const KYC: React.FC<KYCProps> = ({ setIsLoggedIn }) => {
 
       setTimeout(() => {
         if (userType === 'admin') {
-          navigation.replace('AdminDashboard');
+          navigation.replace('AdminDashboard', { setIsLoggedIn, darkMode, toggleMode });
         } else if (userType === 'investor') {
-          navigation.replace('InvestorDashboard');
+          navigation.replace('InvestorDashboard', { setIsLoggedIn, darkMode, toggleMode });
         } else if (userType === 'minor') {
-          navigation.replace('MinorDashboard');
+          navigation.replace('MinorDashboard', { setIsLoggedIn, darkMode, toggleMode });
         } else {
           setMessage({ text: 'Invalid user type.', type: 'error' });
-          navigation.navigate('Login', { setIsLoggedIn });
+          navigation.navigate('Login', { setIsLoggedIn, darkMode, toggleMode });
         }
         setMessage({ text: '', type: '' });
       }, 3000);
@@ -164,7 +158,9 @@ const KYC: React.FC<KYCProps> = ({ setIsLoggedIn }) => {
     <View className={`flex-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
       <Header darkMode={darkMode} toggleMode={toggleMode} />
       <View className="flex-1 p-5 justify-center">
-        <Text className="text-2xl font-bold text-[#050142] mb-5 text-center">KYC Verification</Text>
+        <Text className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#050142]'} mb-5 text-center`}>
+          KYC Verification
+        </Text>
         {message.text ? (
           <Text
             className={`text-center text-base mb-4 ${
@@ -175,23 +171,27 @@ const KYC: React.FC<KYCProps> = ({ setIsLoggedIn }) => {
           </Text>
         ) : null}
 
-        <View className="bg-white p-4 rounded-lg shadow-md mb-5">
-          <Text className="text-lg text-[#454545] mb-2">Government ID:</Text>
+        <View className={`p-4 rounded-lg shadow-md mb-5 ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+          <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>Government ID:</Text>
           <TouchableOpacity
-            className="border border-gray-300 p-3 rounded-md mb-4 bg-gray-200"
+            className={`border border-gray-300 p-3 rounded-md mb-4 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}
             onPress={() => pickFile('govID')}
             accessibilityLabel="Upload Government ID"
           >
-            <Text className="text-[#454545]">{govID ? 'File Selected' : 'Tap to Upload'}</Text>
+            <Text className={`${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {govID ? 'File Selected' : 'Tap to Upload'}
+            </Text>
           </TouchableOpacity>
 
-          <Text className="text-lg text-[#454545] mb-2">Facial Recognition Image:</Text>
+          <Text className={`text-lg ${darkMode ? 'text-gray-300' : 'text-[#454545]'} mb-2`}>Facial Recognition Image:</Text>
           <TouchableOpacity
-            className="border border-gray-300 p-3 rounded-md mb-4 bg-gray-200"
+            className={`border border-gray-300 p-3 rounded-md mb-4 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}
             onPress={() => pickFile('facialRec')}
             accessibilityLabel="Upload Facial Recognition Image"
           >
-            <Text className="text-[#454545]">{facialRec ? 'File Selected' : 'Tap to Upload'}</Text>
+            <Text className={`${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {facialRec ? 'File Selected' : 'Tap to Upload'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity

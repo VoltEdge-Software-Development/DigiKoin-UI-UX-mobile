@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList, BuySellProps } from './types'; 
 import Nav from './Nav';
-import tw from 'twrnc'; 
+import tw from 'twrnc';
 
-// Define Header props type
+// Define Header props type with async toggleMode
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => Promise<void>;
 }
 
 // Header Component
@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
       </Text>
       <Switch
         value={darkMode}
-        onValueChange={toggleMode}
+        onValueChange={toggleMode} 
         thumbColor={darkMode ? '#FFFFFF' : '#050142'}
         trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
         style={tw`mr-5`}
@@ -46,13 +46,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
   );
 };
 
-interface BuySellProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
-
+// Use BuySellProps from types.ts
 const BuySell: React.FC<BuySellProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'BuySell'>>();
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
@@ -116,10 +110,6 @@ const BuySell: React.FC<BuySellProps> = ({ setIsLoggedIn, userType, darkMode, to
     }, 1000);
   };
 
-  if (userType === 'minor') {
-    return null;
-  }
-
   return (
     <View style={tw`flex-1 ${darkMode ? 'bg-gray-800/85' : 'bg-gray-200/85'}`}>
       <Header darkMode={darkMode} toggleMode={toggleMode} />
@@ -142,7 +132,7 @@ const BuySell: React.FC<BuySellProps> = ({ setIsLoggedIn, userType, darkMode, to
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={tw`flex-1 p-3 rounded-tr-md rounded-br-md ${
+            style={tw`flex-1 p-3 rounded-tr	md rounded-br-md ${
               activeTab === 'sell' ? 'bg-[#050142]' : 'bg-gray-300'
             }`}
             onPress={() => showTab('sell')}
@@ -282,7 +272,7 @@ const BuySell: React.FC<BuySellProps> = ({ setIsLoggedIn, userType, darkMode, to
       </View>
 
       {/* Navigation Bar */}
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };

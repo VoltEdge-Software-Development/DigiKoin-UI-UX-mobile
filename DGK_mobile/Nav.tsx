@@ -22,7 +22,7 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
           : 'MinorDashboard',
     },
     { name: 'Buy/Sell', route: 'BuySell' }, // Only for investors/admins
-    { name: 'Wallet', route: 'Wallet' },     // Only for investors/admins
+    { name: 'Wallet', route: 'Wallet' }, // Only for investors/admins
     { name: 'Gold Storage', route: 'GoldStorage' }, // Only for investors/admins
     { name: 'Profile', route: 'Profile' },
     { name: 'FAQ', route: 'FAQ' },
@@ -57,13 +57,12 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
     }
   };
 
-  const handleNavigation = (routeName: keyof RootStackParamList) => {
+  // Type routeName to match only the routes in navItems
+  type NavRouteName = (typeof navItems)[number]['route'];
+  const handleNavigation = (routeName: NavRouteName) => {
     switch (routeName) {
       case 'Profile':
         navigation.navigate('Profile', { setIsLoggedIn, userType, darkMode, toggleMode });
-        break;
-      case 'Welcome':
-        navigation.navigate('Welcome', { setIsLoggedIn, darkMode, toggleMode });
         break;
       case 'AdminDashboard':
       case 'InvestorDashboard':
@@ -99,17 +98,7 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
       case 'FAQ':
         navigation.navigate('FAQ', { setIsLoggedIn, userType, darkMode, toggleMode });
         break;
-      case 'Terms':
-        navigation.navigate('Terms');
-        break;
-      case 'Logout':
-        navigation.navigate('Logout');
-        break;
-      case 'Nav':
-        navigation.navigate('Nav', { darkMode, setIsLoggedIn, userType, toggleMode });
-        break;
-      default:
-        navigation.navigate(routeName); // Fallback for unhandled routes
+      // No default case needed since all navItems routes are handled
     }
   };
 
@@ -127,7 +116,7 @@ const Nav: React.FC<NavProps> = ({ darkMode, setIsLoggedIn, userType, toggleMode
           <TouchableOpacity
             key={item.route}
             style={tw`p-2 rounded-md ${route.name === item.route ? (darkMode ? 'bg-white/30' : 'bg-white/20') : ''}`}
-            onPress={() => handleNavigation(item.route as keyof RootStackParamList)}
+            onPress={() => handleNavigation(item.route)}
             accessibilityLabel={`Navigate to ${item.name}`}
             activeOpacity={0.7}
           >

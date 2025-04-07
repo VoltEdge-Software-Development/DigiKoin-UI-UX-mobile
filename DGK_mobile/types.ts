@@ -38,7 +38,9 @@ export interface NavProps extends BaseProps {
 }
 export interface WelcomeProps extends BaseProps, StackScreenProps<RootStackParamList, 'Welcome'> {}
 export interface SignUpProps extends BaseProps, StackScreenProps<RootStackParamList, 'SignUp'> {}
-export interface AdminDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'AdminDashboard'> {}
+export interface AdminDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'AdminDashboard'> {
+  userType: 'minor' | 'investor' | 'admin' | null;
+}
 export interface InvestorDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'InvestorDashboard'> {}
 export interface MinorDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'MinorDashboard'> {}
 export interface EducationalContentProps extends BaseProps, StackScreenProps<RootStackParamList, 'EducationalContent'> {}

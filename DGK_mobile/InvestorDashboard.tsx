@@ -2,16 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Linking, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
-import tw from 'twrnc'; 
-
-interface InvestorDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
-}
+import { RootStackParamList, InvestorDashboardProps } from './types'; // Import from types.ts
+import tw from 'twrnc';
 
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => Promise<void>; // Match App.tsx's async toggleMode
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -47,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
   );
 };
 
-const InvestorDashboard: React.FC<InvestorDashboardProps> = ({ setIsLoggedIn }) => {
+const InvestorDashboard: React.FC<InvestorDashboardProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'InvestorDashboard'>>();
   const [metrics, setMetrics] = useState<{
     tokenPrice: string;
@@ -80,10 +76,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({ setIsLoggedIn }) 
     transactionVolume: string;
     geoDistribution: string;
   } | null>(null);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const toggleMode = () => setDarkMode(prev => !prev);
 
   useEffect(() => {
     setTimeout(() => {
@@ -128,7 +121,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({ setIsLoggedIn }) 
     }
   }, [errorMessage]);
 
-  const handleInvestNow = () => navigation.navigate('BuySell');
+  const handleInvestNow = () => navigation.navigate('BuySell', { setIsLoggedIn, darkMode, toggleMode });
   const handleViewWhitepaper = () => {
     Linking.openURL('https://example.com/whitepaper.pdf').catch(() =>
       setErrorMessage('Unable to open whitepaper.')
@@ -140,7 +133,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({ setIsLoggedIn }) 
     );
   };
   const handleProfile = () => {
-    navigation.navigate('Profile', { setIsLoggedIn });
+    navigation.navigate('Profile', { setIsLoggedIn, darkMode, toggleMode });
   };
 
   return (

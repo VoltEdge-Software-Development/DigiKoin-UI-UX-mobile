@@ -2,17 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Linking, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList, MinorDashboardProps } from './types'; // Import MinorDashboardProps from types.ts
 import Nav from './Nav';
 import Header from './Header';
 import tw from 'twrnc';
 
-interface MinorDashboardProps {
-  setIsLoggedIn: (value: boolean) => void;
-  darkMode: boolean;
-  toggleMode: () => void;
-}
-
+// Use MinorDashboardProps from types.ts
 const MinorDashboard: React.FC<MinorDashboardProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'MinorDashboard'>>();
   const [features, setFeatures] = useState<{
@@ -36,7 +31,6 @@ const MinorDashboard: React.FC<MinorDashboardProps> = ({ setIsLoggedIn, darkMode
     }, 1000);
   }, []);
 
-  
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 5000);
@@ -245,7 +239,7 @@ const MinorDashboard: React.FC<MinorDashboardProps> = ({ setIsLoggedIn, darkMode
           </View>
         </View>
       </ScrollView>
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType="minor" />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType="minor" toggleMode={toggleMode} />
     </View>
   );
 };

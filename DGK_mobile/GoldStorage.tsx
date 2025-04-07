@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';
+import { RootStackParamList, GoldStorageProps } from './types'; // Import GoldStorageProps from types.ts
 import Nav from './Nav';
 import tw from 'twrnc';
 
+// HeaderProps should match the async toggleMode from types.ts
 interface HeaderProps {
   darkMode: boolean;
-  toggleMode: () => void;
+  toggleMode: () => Promise<void>; // Updated to Promise<void>
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
@@ -34,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
       </Text>
       <Switch
         value={darkMode}
-        onValueChange={toggleMode}
+        onValueChange={toggleMode} // toggleMode is async, but Switch handles it fine
         thumbColor={darkMode ? '#FFFFFF' : '#050142'}
         trackColor={{ false: '#CCC', true: darkMode ? '#FFB84D' : '#AEADAD' }}
         style={tw`mr-5`}
@@ -43,11 +44,6 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
     </View>
   );
 };
-
-interface GoldStorageProps {
-  setIsLoggedIn: (value: boolean) => void;
-  userType: 'minor' | 'investor' | 'admin' | null;
-}
 
 interface Metrics {
   oreProcessed: string;
@@ -81,13 +77,11 @@ interface Metrics {
   notifications: string;
 }
 
-const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType }) => {
+// Use GoldStorageProps from types.ts
+const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'GoldStorage'>>();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const toggleMode = () => setDarkMode(prev => !prev);
 
   useEffect(() => {
     setTimeout(() => {
@@ -134,7 +128,7 @@ const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType }) =>
 
   const handleViewWallet = () => {
     try {
-      navigation.navigate('Wallet');
+      navigation.navigate('Wallet', { setIsLoggedIn, userType, darkMode, toggleMode });
     } catch (error) {
       setErrorMessage('Failed to navigate to Wallet.');
     }
@@ -384,7 +378,7 @@ const GoldStorage: React.FC<GoldStorageProps> = ({ setIsLoggedIn, userType }) =>
         </View>
       </ScrollView>
 
-      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} />
+      <Nav darkMode={darkMode} setIsLoggedIn={setIsLoggedIn} userType={userType} toggleMode={toggleMode} />
     </View>
   );
 };
