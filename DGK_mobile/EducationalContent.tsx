@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
+import { Dispatch, SetStateAction } from 'react';
+import tw from 'twrnc';
 
 interface EducationalContentProps {
-  setIsLoggedIn: (value: boolean) => void;
+  setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
+  darkMode: boolean;
+  toggleMode: () => Promise<void>;
+  userType: 'minor' | 'investor' | 'admin' | null;
+  navigation: StackNavigationProp<RootStackParamList, 'EducationalContent'>;
 }
 
-const EducationalContent: React.FC<EducationalContentProps> = ({ setIsLoggedIn }) => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'EducationalContent'>>();
+const EducationalContent: React.FC<EducationalContentProps> = ({ setIsLoggedIn, darkMode, toggleMode, userType, navigation }) => {
   const [steps, setSteps] = useState<{
     step1: string;
     step2: string;
@@ -30,49 +34,63 @@ const EducationalContent: React.FC<EducationalContentProps> = ({ setIsLoggedIn }
   }, []);
 
   const handleProfile = () => {
-    navigation.navigate('Profile', { setIsLoggedIn });
+    navigation.navigate('Profile', { setIsLoggedIn, darkMode, toggleMode, userType });
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-200/85">
+    <ScrollView style={tw`flex-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-200/85'}`}>
       {/* Header */}
-      <View className="p-5 bg-[#050142] mt-[50px] mb-5">
-        <Text className="text-2xl font-bold text-white text-center">How DigiKoin Works</Text>
+      <View style={tw`p-5 ${darkMode ? 'bg-gray-900' : 'bg-[#050142]'} mt-[50px] mb-5`}>
+        <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-white'} text-center`}>
+          How DigiKoin Works
+        </Text>
       </View>
 
       {/* Educational Steps */}
-      <View className="p-5 bg-white/10 rounded-[10px] mx-5 mb-5 shadow-sm">
-        <Text className="text-2xl font-bold text-[#454545] mb-3">Learn the Process</Text>
-        <View className="flex-col gap-4">
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/step1-mining.png')} className="w-7 h-7 mr-3" />
-            <Text className="text-base font-medium">{steps ? steps.step1 : 'Loading...'}</Text>
+      <View style={tw`p-5 ${darkMode ? 'bg-gray-700' : 'bg-white/10'} rounded-[10px] mx-5 mb-5 shadow-sm`}>
+        <Text style={tw`text-2xl font-bold ${darkMode ? 'text-white' : 'text-[#454545]'} mb-3`}>
+          Learn the Process
+        </Text>
+        <View style={tw`flex-col gap-4`}>
+          <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+            <Image source={require('../assets/step1-mining.png')} style={tw`w-7 h-7 mr-3`} />
+            <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {steps ? steps.step1 : 'Loading...'}
+            </Text>
           </View>
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/step2-tokenization.png')} className="w-7 h-7 mr-3" />
-            <Text className="text-base font-medium">{steps ? steps.step2 : 'Loading...'}</Text>
+          <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+            <Image source={require('../assets/step2-tokenization.png')} style={tw`w-7 h-7 mr-3`} />
+            <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {steps ? steps.step2 : 'Loading...'}
+            </Text>
           </View>
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/step3-storage.png')} className="w-7 h-7 mr-3" />
-            <Text className="text-base font-medium">{steps ? steps.step3 : 'Loading...'}</Text>
+          <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+            <Image source={require('../assets/step3-storage.png')} style={tw`w-7 h-7 mr-3`} />
+            <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {steps ? steps.step3 : 'Loading...'}
+            </Text>
           </View>
-          <View className="flex-row items-center p-2 bg-white/80 rounded-lg shadow-sm">
-            <Image source={require('../assets/step4-wallet.png')} className="w-7 h-7 mr-3" />
-            <Text className="text-base font-medium">{steps ? steps.step4 : 'Loading...'}</Text>
+          <View style={tw`flex-row items-center p-2 ${darkMode ? 'bg-gray-600' : 'bg-white/80'} rounded-lg shadow-sm`}>
+            <Image source={require('../assets/step4-wallet.png')} style={tw`w-7 h-7 mr-3`} />
+            <Text style={tw`text-base font-medium ${darkMode ? 'text-white' : 'text-[#454545]'}`}>
+              {steps ? steps.step4 : 'Loading...'}
+            </Text>
           </View>
         </View>
-        <View className="h-[150px] bg-gray-100/20 rounded-md mt-3 flex items-center justify-center">
-          <Text className="italic text-gray-600">Infographic/Video Explainer</Text>
+        <View style={tw`h-[150px] ${darkMode ? 'bg-gray-600/20' : 'bg-gray-100/20'} rounded-md mt-3 flex items-center justify-center`}>
+          <Text style={tw`italic ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Infographic/Video Explainer
+          </Text>
         </View>
       </View>
 
       {/* Back to Profile */}
       <TouchableOpacity
-        className="p-3 bg-[#050142] rounded-md mx-5 mb-5"
+        style={tw`p-3 ${darkMode ? 'bg-gray-900' : 'bg-[#050142]'} rounded-md mx-5 mb-5`}
         onPress={handleProfile}
         accessibilityLabel="Back to Profile"
       >
-        <Text className="text-white text-center text-base font-medium">Back to Profile</Text>
+        <Text style={tw`text-white text-center text-base font-medium`}>Back to Profile</Text>
       </TouchableOpacity>
     </ScrollView>
   );

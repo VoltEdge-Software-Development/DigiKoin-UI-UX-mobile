@@ -116,14 +116,40 @@ const App: React.FC = () => {
     restricted?: boolean;
   };
 
-  const PublicRoute = <K extends keyof RootStackParamList>({ component: Component, restricted, ...props }: PublicRouteProps<K>) => {
+  const PublicRoute = <K extends keyof RootStackParamList>({
+    component: Component,
+    restricted,
+    ...props
+  }: PublicRouteProps<K>) => {
     if (restricted && isLoggedIn && kycVerified) {
       if (userType === 'admin') {
-        return <AdminDashboard {...(props as StackScreenProps<RootStackParamList, 'AdminDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return (
+          <AdminDashboard
+            {...(props as StackScreenProps<RootStackParamList, 'AdminDashboard'>)}
+            setIsLoggedIn={setIsLoggedIn}
+            darkMode={darkMode}
+            toggleMode={toggleMode}
+            userType={userType} // Add this only for AdminDashboard
+          />
+        );
       } else if (userType === 'investor') {
-        return <InvestorDashboard {...(props as StackScreenProps<RootStackParamList, 'InvestorDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return (
+          <InvestorDashboard
+            {...(props as StackScreenProps<RootStackParamList, 'InvestorDashboard'>)}
+            setIsLoggedIn={setIsLoggedIn}
+            darkMode={darkMode}
+            toggleMode={toggleMode}
+          />
+        );
       } else if (userType === 'minor') {
-        return <MinorDashboard {...(props as StackScreenProps<RootStackParamList, 'MinorDashboard'>)} setIsLoggedIn={setIsLoggedIn} darkMode={darkMode} toggleMode={toggleMode} />;
+        return (
+          <MinorDashboard
+            {...(props as StackScreenProps<RootStackParamList, 'MinorDashboard'>)}
+            setIsLoggedIn={setIsLoggedIn}
+            darkMode={darkMode}
+            toggleMode={toggleMode}
+          />
+        );
       }
     }
     return (

@@ -43,8 +43,12 @@ export interface AdminDashboardProps extends BaseProps, StackScreenProps<RootSta
 }
 export interface InvestorDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'InvestorDashboard'> {}
 export interface MinorDashboardProps extends BaseProps, StackScreenProps<RootStackParamList, 'MinorDashboard'> {}
-export interface EducationalContentProps extends BaseProps, StackScreenProps<RootStackParamList, 'EducationalContent'> {}
-export interface CommunityEngagementProps extends BaseProps, StackScreenProps<RootStackParamList, 'CommunityEngagement'> {}
+export interface EducationalContentProps extends BaseProps, StackScreenProps<RootStackParamList, 'EducationalContent'> {
+  userType: 'minor' | 'investor' | 'admin' | null;
+}
+export interface CommunityEngagementProps extends BaseProps, StackScreenProps<RootStackParamList, 'CommunityEngagement'> {
+  userType: 'minor' | 'investor' | 'admin' | null;
+}
 export interface BuySellProps extends BaseProps, StackScreenProps<RootStackParamList, 'BuySell'> {
   userType: 'investor' | 'admin' | null;
 }
