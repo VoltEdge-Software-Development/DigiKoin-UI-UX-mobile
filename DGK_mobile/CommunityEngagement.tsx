@@ -49,7 +49,7 @@ const CommunityEngagement: React.FC<CommunityEngagementProps> = ({ setIsLoggedIn
   const handleSocialLink = (url: string) => {
     Linking.openURL(url).catch(() => {
       setErrorMessage('Unable to open social media link.');
-      setTimeout(() => setErrorMessage(null), 3000); // Clear after 3 seconds
+      setTimeout(() => setErrorMessage(null), 3000);
     });
   };
 

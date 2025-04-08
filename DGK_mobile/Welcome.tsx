@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, WelcomeProps } from './types'; // Import from types.ts
+import { RootStackParamList, WelcomeProps } from './types';
 
 const Welcome: React.FC<WelcomeProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Welcome'>>();

@@ -13,5 +13,5 @@ declare module 'react-native' {
   interface TouchableOpacityProps {
     className?: string;
   }
-  // Add other components as needed (e.g., ScrollViewProps, ImageProps)
+  // Add other components
 }

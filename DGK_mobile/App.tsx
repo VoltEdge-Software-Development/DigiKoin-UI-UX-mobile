@@ -129,7 +129,7 @@ const App: React.FC = () => {
             setIsLoggedIn={setIsLoggedIn}
             darkMode={darkMode}
             toggleMode={toggleMode}
-            userType={userType} // Add this only for AdminDashboard
+            userType={userType}
           />
         );
       } else if (userType === 'investor') {

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, ResetPasswordProps } from './types'; // Import from types.ts
+import { RootStackParamList, ResetPasswordProps } from './types'; 
 import Header from './Header';
 
 const ResetPassword: React.FC<ResetPasswordProps> = ({ setIsLoggedIn, darkMode, toggleMode }) => {

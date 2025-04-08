@@ -17,7 +17,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleMode }) => {
     >
       <Image
         source={require('../assets/Gorilla.png')}
-        style={tw`w-[50px] h-[50px] ml-5`} // Replace className with style
+        style={tw`w-[50px] h-[50px] ml-5`}
         resizeMode="contain"
         accessibilityLabel="DigiKoin Logo"
       />
