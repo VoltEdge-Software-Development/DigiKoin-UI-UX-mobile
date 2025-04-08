@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "735564642628",
+    "project_id": "digikoin-6cd0d",
+    "storage_bucket": "digikoin-6cd0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735564642628:android:498c027f171a34a9cd3f11",
+        "android_client_info": {
+          "package_name": "com.voltedge.digikoin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhkPnE8ynyIdvrc7jvwkeDdK26G2WGXYE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
