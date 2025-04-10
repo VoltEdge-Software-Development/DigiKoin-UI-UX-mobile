@@ -21,7 +21,7 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [userType, setUserType] = useState<string>("investor");
+  const [userType, setUserType] = useState<string>("Investor");
   const { login } = useAuth();
 
   const handleEmailLogin = async () => {

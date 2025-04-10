@@ -1,20 +1,42 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter, useSegments } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
+  User,
 } from "firebase/auth";
 import { auth, db } from "@/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { UserType } from "@/types/user";
+import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const AuthContext = createContext();
+// Define the type for the context
+interface AuthContextType {
+  user: any;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, type: UserType) => Promise<void>;
+  logout: () => void;
+}
 
-export const AuthContextProvider = ({ children }) => {
+// Create the context with an initial value
+const AuthContext: React.Context<AuthContextType | undefined> = createContext<
+  AuthContextType | undefined
+>(undefined);
+
+export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const segments = useSegments();
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(undefined);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     // onAuthStateChange
@@ -37,52 +59,50 @@ export const AuthContextProvider = ({ children }) => {
     const inApp = segments[0] == "(app)";
 
     if (isAuthenticated && !inApp) {
-      // redirect to home
-      router.replace("/home");
+      checkKYC();
     } else if (isAuthenticated == false) {
       // redirect to welcome
       router.replace("/welcome");
     }
   }, [isAuthenticated]);
 
-  const login = async (email, password) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+  const checkKYC = async () => {
+    if (!user) return;
+    const { uid } = user;
 
-      const { uid } = userCredential.user;
+    // ✅ Get user document from Firestore
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
 
-      // ✅ Get user document from Firestore
-      const userRef = doc(db, "users", uid);
-      const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      Alert.alert("User record not found.");
+      return;
+    }
 
-      if (!userSnap.exists()) {
-        Alert.alert("User record not found.");
-        return;
+    const userData = userSnap.data();
+    const { kyc, type } = userData;
+
+    // ✅ Check if KYC is valid
+    const isValidKYC = Array.isArray(kyc) && kyc.length === 2;
+    if (isValidKYC) {
+      // ✅ KYC complete
+      if ((type as UserType) === "Investor") {
+        router.replace("/investor/dashboard");
       }
+    } else {
+      // ❌ KYC incomplete, navigating to KYC screen
+      router.replace("/kyc");
+    }
+  };
 
-      const userData = userSnap.data();
-      const kyc = userData?.kyc;
-
-      // ✅ Check if KYC is valid
-      const isValidKYC = Array.isArray(kyc) && kyc.length === 2;
-      // &&
-      // kyc.every(
-      //   (item) => typeof item === "string" && item.startsWith("http")
-      // );
+  const login = async (email: string, password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
 
       await AsyncStorage.setItem("userEmail", email);
-      if (isValidKYC) {
-        // ✅ KYC complete, navigating to home
-        router.replace("/home");
-      } else {
-        // ❌ KYC incomplete, navigating to KYC screen
-        router.replace("/kyc");
-      }
-    } catch (error) {
+
+      checkKYC();
+    } catch (error: any) {
       let msg = error?.message;
 
       if (msg.includes("auth/invalid-email")) {
@@ -99,7 +119,7 @@ export const AuthContextProvider = ({ children }) => {
     } catch (error) {}
   };
 
-  const register = async (email, password) => {
+  const register = async (email: string, password: string, type: UserType) => {
     try {
       const response = await createUserWithEmailAndPassword(
         auth,
@@ -109,6 +129,7 @@ export const AuthContextProvider = ({ children }) => {
 
       await setDoc(doc(db, "users", response?.user?.uid), {
         email,
+        type,
         userId: response?.user?.uid,
       });
 
@@ -137,15 +158,16 @@ export const AuthContextProvider = ({ children }) => {
       //   console.log("User with the email already exists.");
       // }
 
-      return { success: true, data: response?.user };
-    } catch (error) {
+      // return { success: true, data: response?.user };
+    } catch (error: any) {
       let msg = error?.message;
 
       if (msg.includes("auth/invalid-email")) {
         msg = "Invalid email";
       }
 
-      return { success: false, msg };
+      Alert.alert("Error", msg);
+      // return { success: false, msg };
     }
   };
 

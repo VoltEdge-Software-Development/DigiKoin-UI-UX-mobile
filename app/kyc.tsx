@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  PermissionsAndroid,
-  Switch,
-  Image,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View, Text, TouchableOpacity, Alert, Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
@@ -43,7 +33,6 @@ const KYC = () => {
       aspect: [4, 3],
       quality: 1,
     }).then((result) => {
-      console.log("result", result.assets);
       if (result.assets) setFunc(result.assets[0].uri);
     });
   };
@@ -57,7 +46,7 @@ const KYC = () => {
           kyc: [govID, facialRec],
         });
 
-        console.log("Gov ID URLs updated!");
+        router.replace("/home");
       } catch (error) {
         console.error("Error updating gov ID URLs:", error);
       }

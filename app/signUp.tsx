@@ -4,6 +4,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import React, { useRef, useState } from "react";
 import {
@@ -12,16 +13,24 @@ import {
 } from "react-native-responsive-screen";
 import { router } from "expo-router";
 import { useAuth } from "@/context/authContext";
+import { Picker } from "@react-native-picker/picker";
+import { USER_TYPES } from "@/constants/user";
+import { UserType } from "@/types/user";
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
-  const emailRef = useRef("");
-  const passwordRef = useRef("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [userType, setUserType] = useState<UserType>();
   const { register } = useAuth();
 
   const handleSignUp = async () => {
+    if (!email || !password || !userType) {
+      Alert.alert("Please fill in all fields.");
+      return;
+    }
     setLoading(true);
-    await register(emailRef.current, passwordRef.current);
+    await register(email, password, userType);
     setLoading(false);
   };
 
@@ -31,18 +40,38 @@ const SignUp = () => {
         <Text className={`text-2xl font-bold text-white mb-5 text-center`}>
           Sign Up
         </Text>
+        <Text className="text-lg text-gray-300">User Type:</Text>
+        <Picker
+          selectedValue={userType}
+          placeholder="Select user type"
+          onValueChange={setUserType}
+          className="border border-gray-300 p-2 rounded-md"
+          style={{
+            borderStyle: "solid",
+            borderWidth: 1,
+            borderColor: "gray",
+          }}
+        >
+          {USER_TYPES.map((type, index) => (
+            <Picker.Item key={index} label={type} value={type} />
+          ))}
+        </Picker>
+
+        <Text className="text-lg text-gray-300 mb-2">Email:</Text>
         <TextInput
           className={`border border-gray-300 p-3 rounded-md mb-4 bg-gray-700 text-white`}
-          onChangeText={(value) => (emailRef.current = value)}
+          onChangeText={setEmail}
           placeholder="Email"
           placeholderTextColor={"#A0A0A0"}
           keyboardType="email-address"
           autoCapitalize="none"
           accessibilityLabel="Email input"
         />
+
+        <Text className="text-lg text-gray-300 mb-2">Password:</Text>
         <TextInput
           className={`border border-gray-300 p-3 rounded-md mb-4 bg-gray-700 text-white`}
-          onChangeText={(value) => (passwordRef.current = value)}
+          onChangeText={setPassword}
           placeholder="Password"
           placeholderTextColor={"#A0A0A0"}
           secureTextEntry
