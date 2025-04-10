@@ -13,10 +13,8 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/firebaseConfig";
 import { Picker } from "@react-native-picker/picker";
+import { useAuth } from "@/context/authContext";
 
 const SignIn = () => {
   const router = useRouter();
@@ -24,27 +22,15 @@ const SignIn = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [userType, setUserType] = useState<string>("investor");
+  const { login } = useAuth();
 
   const handleEmailLogin = async () => {
     if (!email || !password || !userType) {
       Alert.alert("Please fill in all fields.");
       return;
     }
-    try {
-      setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      console.log("User signed in:", userCredential.user);
-
-      await AsyncStorage.setItem("userEmail", email);
-      router.replace("/home");
-    } catch (error) {
-      Alert.alert("Error", "Invalid email or password");
-      console.log("Error signing in:", error);
-    }
+    setLoading(true);
+    await login(email, password);
     setLoading(false);
   };
 
@@ -67,7 +53,6 @@ const SignIn = () => {
             selectedValue={userType}
             placeholder="Select user type"
             onValueChange={(itemValue, itemIndex) => setUserType(itemValue)}
-            // className="border border-gray-300"
             className="border border-gray-300 p-2 rounded-md"
             style={{
               borderStyle: "solid",

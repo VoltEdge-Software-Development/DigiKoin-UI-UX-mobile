@@ -1,71 +1,32 @@
 import {
   View,
   Text,
-  StatusBar,
-  Image,
   TextInput,
   TouchableOpacity,
-  Pressable,
-  Alert,
-  Switch,
+  ActivityIndicator,
 } from "react-native";
 import React, { useRef, useState } from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { Feather, Octicons } from "@expo/vector-icons";
-import { router, useRouter } from "expo-router";
-import CustomKeyboardView from "@/components/CustomKeyboardView";
+import { router } from "expo-router";
 import { useAuth } from "@/context/authContext";
-import { useNavigation } from "@react-navigation/native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/firebaseConfig";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignUp = () => {
-  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
   const emailRef = useRef("");
   const passwordRef = useRef("");
+  const { register } = useAuth();
 
   const handleSignUp = async () => {
-    // router.push('/KYC');
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        emailRef.current,
-        passwordRef.current
-      );
-
-      const usersCollection = collection(db, "users");
-
-      const emailQuery = query(
-        usersCollection,
-        where("email", "==", emailRef.current)
-      );
-      const emailSnapshot = await getDocs(emailQuery);
-
-      if (emailSnapshot.empty) {
-        await addDoc(usersCollection, { email: emailRef.current });
-        console.log("User signed up:", userCredential.user);
-
-        await AsyncStorage.setItem("userEmail", emailRef.current);
-        router.push("/home");
-        // navigation.navigate('Home', { userEmail: emailRef.current });
-      } else {
-        Alert.alert("Login Instead");
-        console.log("User with the email already exists.");
-      }
-    } catch (error) {
-      Alert.alert("Error", "Invalid email or password");
-      console.log("Error signing up:", error);
-    }
+    setLoading(true);
+    await register(emailRef.current, passwordRef.current);
+    setLoading(false);
   };
 
   return (
     <View className={`flex-1 bg-gray-800`}>
-      {/* <Header darkMode={darkMode} toggleMode={toggleMode} /> */}
       <View className={`flex-1 p-5 justify-center mt-[70px]`}>
         <Text className={`text-2xl font-bold text-white mb-5 text-center`}>
           Sign Up
@@ -91,10 +52,15 @@ const SignUp = () => {
           className={`p-3 bg-[#050142] rounded-md mb-4`}
           onPress={handleSignUp}
           accessibilityLabel="Sign Up"
+          disabled={loading}
         >
-          <Text className={`text-white text-center text-base font-medium`}>
-            Sign Up
-          </Text>
+          {loading ? (
+            <ActivityIndicator size={hp(4)} />
+          ) : (
+            <Text className={`text-white text-center text-base font-medium`}>
+              Sign Up
+            </Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.replace("/signIn")}

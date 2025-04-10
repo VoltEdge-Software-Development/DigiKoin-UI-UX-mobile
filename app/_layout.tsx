@@ -1,26 +1,8 @@
-import { Slot, useRouter, useSegments } from "expo-router";
+import { Slot } from "expo-router";
 import "../global.css";
-import { AuthContextProvider, useAuth } from "../context/authContext";
-import { useEffect } from "react";
+import { AuthContextProvider } from "../context/authContext";
 
 const MainLayout = () => {
-  const { isAuthenticated } = useAuth();
-
-  const segments = useSegments();
-  const router = useRouter();
-  useEffect(() => {
-    if (typeof isAuthenticated == "undefined") return;
-    const inApp = segments[0] == "(app)";
-
-    if (isAuthenticated && !inApp) {
-      // redirect to home
-      router.replace("/home");
-    } else if (isAuthenticated == false) {
-      // redirect to welcome
-      router.replace("/welcome");
-    }
-  }, [isAuthenticated]);
-
   return <Slot />;
 };
 
