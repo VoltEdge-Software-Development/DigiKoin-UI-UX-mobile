@@ -5,7 +5,8 @@ import { router } from "expo-router";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "@/firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
-import { useAuth } from "@/context/authContext";
+import { useAuth } from "@/contexts/authContext";
+import { MediaTypeOptions } from "expo-image-picker";
 
 const KYC = () => {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ const KYC = () => {
 
     // No permissions request is necessary for launching the image library
     ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+      mediaTypes: MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -46,7 +47,7 @@ const KYC = () => {
           kyc: [govID, facialRec],
         });
 
-        router.replace("/home");
+        router.replace("/welcome");
       } catch (error) {
         console.error("Error updating gov ID URLs:", error);
       }

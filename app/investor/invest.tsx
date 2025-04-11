@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from "react";
+import {
+  client,
+  goldReserveManagerContract,
+  priceFeedContract,
+} from "@/constants/thirdweb";
+import { calculateEthFromGold } from "@/utils";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +13,22 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { prepareContractCall, toWei } from "thirdweb";
+import { sepolia } from "thirdweb/chains";
+import {
+  useSendTransaction,
+  useReadContract,
+  useActiveAccount,
+  useConnect,
+  useSwitchActiveWalletChain,
+} from "thirdweb/react";
+import { createWallet } from "thirdweb/wallets";
 
 const Invest = () => {
+  const { connect, isConnecting } = useConnect();
+  const account = useActiveAccount();
+  const switchChain = useSwitchActiveWalletChain();
+  const { mutate: sendTransaction, isPending } = useSendTransaction();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [buyAmount, setBuyAmount] = useState<string>("");
   const [buyMethod, setBuyMethod] = useState<string>("");
@@ -17,6 +37,14 @@ const Invest = () => {
   const [buyConfirmation, setBuyConfirmation] = useState<string>("");
   const [sellConfirmation, setSellConfirmation] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const { data: ethPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getEthPrice() public view returns (uint256)",
+  });
+  const { data: xauPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getXauPrice() public view returns (uint256)",
+  });
 
   useEffect(() => {
     if (error || buyConfirmation || sellConfirmation) {
@@ -74,6 +102,38 @@ const Invest = () => {
     setTimeout(() => {
       setSellConfirmation(`Sold ${sellAmount} to ${sellMethod}. Completed!`);
     }, 1000);
+  };
+
+  const invest = async () => {
+    if (ethPrice && xauPrice) {
+      if (activeTab === "buy") {
+        if (account) {
+          await switchChain(sepolia);
+          if (isNaN(parseFloat(buyAmount))) {
+          } else {
+            const transaction = prepareContractCall({
+              contract: goldReserveManagerContract,
+              method: "function holdGold(uint256 grams) external payable",
+              params: [toWei(buyAmount)],
+              value: calculateEthFromGold(buyAmount, xauPrice, ethPrice),
+            });
+            sendTransaction(transaction, {
+              onError: (error) => {
+                console.error("holdGold: ", error);
+              },
+            });
+          }
+        } else {
+          connect(async () => {
+            const w = createWallet("io.metamask");
+            await w.connect({
+              client,
+            });
+            return w;
+          });
+        }
+      }
+    }
   };
 
   return (
@@ -148,7 +208,7 @@ const Invest = () => {
                     text: "Bank Transfer",
                     onPress: () => setBuyMethod("bank-transfer"),
                   },
-                  { text: "USDT", onPress: () => setBuyMethod("usdt") },
+                  // { text: "USDT", onPress: () => setBuyMethod("usdt") },
                   { text: "Cancel", style: "cancel" },
                 ])
               }
@@ -160,11 +220,11 @@ const Invest = () => {
             </TouchableOpacity>
             <TouchableOpacity
               className="p-3 bg-[#050142] rounded-md mb-4"
-              onPress={buyGold}
+              onPress={invest}
               accessibilityLabel="Confirm Purchase"
             >
               <Text className="text-white text-center text-base font-medium">
-                Confirm Purchase
+                {account ? "Confirm Purchase" : "Connect Metamask"}
               </Text>
             </TouchableOpacity>
             {buyConfirmation ? (

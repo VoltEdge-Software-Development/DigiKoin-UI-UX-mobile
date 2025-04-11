@@ -1,15 +1,44 @@
-import { Slot } from "expo-router";
 import "../global.css";
-import { AuthContextProvider } from "../context/authContext";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { ThirdwebProvider } from "thirdweb/react";
 
-const MainLayout = () => {
-  return <Slot />;
-};
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { AuthContextProvider } from "@/contexts/authContext";
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const [loaded] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  });
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  }
+
   return (
-    <AuthContextProvider>
-      <MainLayout />
-    </AuthContextProvider>
+    <ThirdwebProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <AuthContextProvider>
+          <Stack></Stack>
+        </AuthContextProvider>
+      </ThemeProvider>
+    </ThirdwebProvider>
   );
 }

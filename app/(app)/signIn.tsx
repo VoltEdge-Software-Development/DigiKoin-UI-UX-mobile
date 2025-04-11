@@ -14,7 +14,7 @@ import {
 } from "react-native-responsive-screen";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
-import { useAuth } from "@/context/authContext";
+import { useAuth } from "@/contexts/authContext";
 
 const SignIn = () => {
   const router = useRouter();
@@ -114,7 +114,7 @@ const SignIn = () => {
             accessibilityLabel="Login with Google"
           >
             <Image
-              source={require("../assets/images/google-logo.png")}
+              source={require("@/assets/images/google.png")}
               className="w-10 h-10"
               accessibilityIgnoresInvertColors
             />
@@ -124,7 +124,7 @@ const SignIn = () => {
             accessibilityLabel="Login with Apple"
           >
             <Image
-              source={require("../assets/images/apple-logo.png")}
+              source={require("@/assets/images/apple.png")}
               className="w-10 h-10"
               accessibilityIgnoresInvertColors
             />
@@ -134,7 +134,7 @@ const SignIn = () => {
             accessibilityLabel="Login with Facebook"
           >
             <Image
-              source={require("../assets/images/facebook-logo.png")}
+              source={require("@/assets/images/facebook.png")}
               className="w-10 h-10"
               accessibilityIgnoresInvertColors
             />
@@ -144,7 +144,7 @@ const SignIn = () => {
             accessibilityLabel="Login with MetaMask"
           >
             <Image
-              source={require("../assets/images/metamask-logo.png")}
+              source={require("@/assets/images/metamask.png")}
               className="w-10 h-10"
               accessibilityIgnoresInvertColors
             />

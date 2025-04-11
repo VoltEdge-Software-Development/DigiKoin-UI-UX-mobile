@@ -1,0 +1,1 @@
+export const TROY_OUNCE_IN_GRAMS_E8 = BigInt(3110352185);

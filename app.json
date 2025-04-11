@@ -5,17 +5,21 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "com.voltedge.digikoin",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "com.voltedge.digikoin",
+      "associatedDomains": [
+        "webcredentials:thirdweb.com",
+        "applinks:thirdweb.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +27,19 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "package": "com.voltedge.digikoin"
+      "package": "com.voltedge.digikoin",
+      "intentFilters": [
+        {
+          "autoVerify": true,
+          "action": "VIEW",
+          "data": {
+            "scheme": "https",
+            "host": "thirdweb.com"
+          },
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -39,10 +55,37 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photo",
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          },
+          "ios": {
+            "extraPods": [
+              {
+                "name": "OpenSSL-Universal",
+                "configurations": ["Release", "Debug"],
+                "modular_headers": true,
+                "version": "3.1.5004"
+              }
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "leon210",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "756794f3-b055-4f78-8a3b-f6cfe3ce2ac4"
+      }
     }
   }
 }

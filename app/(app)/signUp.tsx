@@ -6,13 +6,13 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { router } from "expo-router";
-import { useAuth } from "@/context/authContext";
+import { useAuth } from "@/contexts/authContext";
 import { Picker } from "@react-native-picker/picker";
 import { USER_TYPES } from "@/constants/user";
 import { UserType } from "@/types/user";
