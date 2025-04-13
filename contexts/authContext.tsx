@@ -1,11 +1,11 @@
 import {
   createContext,
-  ReactNode,
+  PropsWithChildren,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -13,18 +13,35 @@ import {
   User,
 } from "firebase/auth";
 import { auth, db } from "@/firebaseConfig";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { UserType } from "@/types/user";
+import { doc, setDoc } from "firebase/firestore";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useStorageState } from "@/hooks/useStorageState";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { AuthParams, UserType } from "@/types";
+
+GoogleSignin.configure({
+  // webClientId: process.env.EXPO_PUBLIC_WEB_ID,
+  scopes: ["profile", "email"], // what API you want to access on behalf of the user, default is email and profile
+  // offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+  forceCodeForRefreshToken: false,
+  // iosClientId: process.env.EXPO_PUBLIC_IOS_ID,
+});
+
+const GoogleLogin = async () => {
+  await GoogleSignin.hasPlayServices();
+  const userInfo = await GoogleSignin.signIn();
+  return userInfo;
+};
 
 // Define the type for the context
 interface AuthContextType {
-  user: any;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, type: UserType) => Promise<void>;
-  logout: () => void;
+  user: User | null;
+  signIn: (params: AuthParams) => Promise<void>;
+  signUp: (email: string, password: string, type: UserType) => Promise<void>;
+  signOut: () => void;
+  session?: string | null;
+  isLoading: boolean;
 }
 
 // Create the context with an initial value
@@ -32,76 +49,53 @@ const AuthContext: React.Context<AuthContextType | undefined> = createContext<
   AuthContextType | undefined
 >(undefined);
 
-export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const segments = useSegments();
+export const AuthContextProvider = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [[isLoading, session], setSession] = useStorageState("session");
 
+  // onAuthStateChange
   useEffect(() => {
-    // onAuthStateChange
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setIsAuthenticated(true);
-
+        setSession(user.refreshToken);
+        // setIsAuthenticated(true);
         setUser(user);
       } else {
-        setIsAuthenticated(false);
+        setSession(null);
+        // setIsAuthenticated(false);
         setUser(null);
       }
     });
-
     return unsub;
   }, []);
 
   useEffect(() => {
-    if (typeof isAuthenticated == "undefined") return;
-    const inApp = segments[0] == "(app)";
-
-    if (isAuthenticated && !inApp) {
-      checkKYC();
-    } else if (isAuthenticated == false) {
+    if (session) {
+      router.replace("/(app)");
+    } else {
       // redirect to welcome
       router.replace("/welcome");
     }
-  }, [isAuthenticated]);
+  }, [session]);
 
-  const checkKYC = async () => {
-    if (!user) return;
-    const { uid } = user;
-
-    // ✅ Get user document from Firestore
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      Alert.alert("User record not found.");
-      return;
-    }
-
-    const userData = userSnap.data();
-    const { kyc, type } = userData;
-
-    // ✅ Check if KYC is valid
-    const isValidKYC = Array.isArray(kyc) && kyc.length === 2;
-    if (isValidKYC) {
-      // ✅ KYC complete
-      if ((type as UserType) === "Investor") {
-        router.replace("/investor/dashboard");
-      }
-    } else {
-      // ❌ KYC incomplete, navigating to KYC screen
-      router.replace("/kyc");
-    }
-  };
-
-  const login = async (email: string, password: string) => {
+  const signIn = async (params: AuthParams) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-
-      await AsyncStorage.setItem("userEmail", email);
-
-      checkKYC();
+      if ("method" in params) {
+        if (params.method === "google") {
+          const response = await GoogleLogin();
+          const { type, data: user } = response ?? {};
+          setSession(user?.idToken ?? null);
+        }
+      } else {
+        const user = await signInWithEmailAndPassword(
+          auth,
+          params.email,
+          params.password
+        );
+        setSession(user.providerId);
+        await AsyncStorage.setItem("userEmail", params.email);
+      }
     } catch (error: any) {
       let msg = error?.message;
 
@@ -113,13 +107,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      auth.signOut();
-    } catch (error) {}
+  const signOut = async () => {
+    setSession(null);
   };
 
-  const register = async (email: string, password: string, type: UserType) => {
+  const signUp = async (email: string, password: string, type: UserType) => {
     try {
       const response = await createUserWithEmailAndPassword(
         auth,
@@ -173,7 +165,14 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, login, register, logout }}
+      value={{
+        user,
+        signIn,
+        signUp,
+        signOut,
+        session,
+        isLoading,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
+import { ThemedButton } from "@/components/ThemedButton";
 
 const Welcome = () => {
   return (
@@ -11,13 +12,11 @@ const Welcome = () => {
       <Text className={`text-lg text-gray-300 mb-6`}>
         Mining Africa's Gold. Empowering Digital Wealth
       </Text>
-      <TouchableOpacity
+      <ThemedButton
+        title="Get started"
         className="p-3 px-6 bg-[#050142] rounded-md"
-        onPress={() => router.push("/signIn")}
-        accessibilityLabel="Get Started with DigiKoin"
-      >
-        <Text className="text-white text-base font-medium">Get Started</Text>
-      </TouchableOpacity>
+        onPress={() => router.replace("/signIn")}
+      />
     </View>
   );
 };

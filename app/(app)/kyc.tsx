@@ -39,7 +39,7 @@ const KYC = () => {
   };
 
   const verifyKYC = async () => {
-    if (govID && facialRec) {
+    if (govID && facialRec && user) {
       try {
         const userRef = doc(db, "users", user.uid);
 

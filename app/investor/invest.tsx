@@ -1,9 +1,14 @@
+import { ThemedButton } from "@/components/ThemedButton";
+import ThemedDropdown from "@/components/ThemedDropdown";
+import { ThemedInput } from "@/components/ThemedInput";
+import { PAYMENT_METHODS, TROY_OUNCE_IN_GRAMS_E8 } from "@/constants";
 import {
   client,
   goldReserveManagerContract,
   priceFeedContract,
 } from "@/constants/thirdweb";
-import { calculateEthFromGold } from "@/utils";
+import { PaymentMethod } from "@/types";
+import { calculateEthFromGold, formatBigIntDivision } from "@/utils";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
@@ -31,12 +36,11 @@ const Invest = () => {
   const { mutate: sendTransaction, isPending } = useSendTransaction();
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
   const [buyAmount, setBuyAmount] = useState<string>("");
-  const [buyMethod, setBuyMethod] = useState<string>("");
+  const [buyMethod, setBuyMethod] = useState<PaymentMethod>();
   const [sellAmount, setSellAmount] = useState<string>("");
   const [sellMethod, setSellMethod] = useState<string>("");
   const [buyConfirmation, setBuyConfirmation] = useState<string>("");
   const [sellConfirmation, setSellConfirmation] = useState<string>("");
-  const [error, setError] = useState<string>("");
   const { data: ethPrice } = useReadContract({
     contract: priceFeedContract,
     method: "function getEthPrice() public view returns (uint256)",
@@ -47,61 +51,19 @@ const Invest = () => {
   });
 
   useEffect(() => {
-    if (error || buyConfirmation || sellConfirmation) {
+    if (buyConfirmation || sellConfirmation) {
       const timer = setTimeout(() => {
-        setError("");
         setBuyConfirmation("");
         setSellConfirmation("");
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [error, buyConfirmation, sellConfirmation]);
+  }, [buyConfirmation, sellConfirmation]);
 
   const showTab = (tab: "buy" | "sell") => {
     setActiveTab(tab);
     setBuyConfirmation("");
     setSellConfirmation("");
-    setError("");
-  };
-
-  const buyGold = () => {
-    if (!buyAmount || !buyMethod) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    const amount = parseFloat(buyAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setError("Please enter a valid amount.");
-      return;
-    }
-    setError("");
-    setBuyConfirmation(
-      `Purchased ${buyAmount} using ${buyMethod}. Transaction pending...`
-    );
-    setTimeout(() => {
-      setBuyConfirmation(
-        `Purchased ${buyAmount} using ${buyMethod}. Completed!`
-      );
-    }, 1000);
-  };
-
-  const sellGold = () => {
-    if (!sellAmount || !sellMethod) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    const amount = parseFloat(sellAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setError("Please enter a valid amount.");
-      return;
-    }
-    setError("");
-    setSellConfirmation(
-      `Sold ${sellAmount} to ${sellMethod}. Transaction pending...`
-    );
-    setTimeout(() => {
-      setSellConfirmation(`Sold ${sellAmount} to ${sellMethod}. Completed!`);
-    }, 1000);
   };
 
   const invest = async () => {
@@ -175,58 +137,58 @@ const Invest = () => {
 
         {/* Buy Gold Tab */}
         {activeTab === "buy" && (
-          <View className="p-5 bg-gray-700 rounded-[10px] shadow-sm">
-            <Text className="text-2xl font-bold text-white mb-3">
-              Buy Token
-            </Text>
-            {error ? (
-              <Text className="text-red-600 mb-4" accessibilityRole="alert">
-                {error}
+          <View className="p-5 bg-gray-700 rounded-[10px] shadow-sm flex flex-col gap-4 overflow-visible">
+            <Text className="text-2xl font-bold text-white mb-3">Buy $DGK</Text>
+
+            {xauPrice && ethPrice ? (
+              <Text className="text-md font-bold text-white mb-3">
+                {`1 Troy ounce gold = ${formatBigIntDivision(
+                  xauPrice,
+                  100000000n
+                )} USD\n`}
+                {`1 Ether = ${formatBigIntDivision(
+                  ethPrice,
+                  100000000n
+                )} USD\n`}
+                {`1 DGK = 1 Gram gold ≈ ${formatBigIntDivision(
+                  xauPrice,
+                  TROY_OUNCE_IN_GRAMS_E8
+                )} USD ≈ ${Number(
+                  formatBigIntDivision(
+                    xauPrice * 100000000n,
+                    TROY_OUNCE_IN_GRAMS_E8 * ethPrice
+                  )
+                )} ETH`}
               </Text>
-            ) : null}
-            <Text className="text-lg text-gray-300 mb-2">
-              Enter Amount (grams or USD):
-            </Text>
-            <TextInput
-              className="border p-2 rounded-md mb-4 border-gray-600 bg-gray-700 text-gray-300"
-              placeholder="Amount"
-              placeholderTextColor="#A0A0A0"
-              value={buyAmount}
-              onChangeText={setBuyAmount}
-              keyboardType="numeric"
-              accessibilityLabel="Buy Amount"
-            />
-            <Text className="text-lg text-gray-300 mb-2">
-              Choose Payment Method:
-            </Text>
-            <TouchableOpacity
-              className="border p-2 rounded-md mb-4 border-gray-600 bg-gray-700"
-              onPress={() =>
-                Alert.alert("Select Payment Method", "", [
-                  { text: "Crypto", onPress: () => setBuyMethod("crypto") },
-                  {
-                    text: "Bank Transfer",
-                    onPress: () => setBuyMethod("bank-transfer"),
-                  },
-                  // { text: "USDT", onPress: () => setBuyMethod("usdt") },
-                  { text: "Cancel", style: "cancel" },
-                ])
-              }
-              accessibilityLabel="Select Buy Method"
-            >
-              <Text className="text-gray-300">
-                {buyMethod || "Select a method"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="p-3 bg-[#050142] rounded-md mb-4"
+            ) : (
+              <></>
+            )}
+            <View>
+              <Text className="text-lg text-gray-300 mb-2">Amount (grams)</Text>
+              <ThemedInput
+                placeholder="Amount"
+                placeholderTextColor="#A0A0A0"
+                value={buyAmount}
+                onChangeText={setBuyAmount}
+                keyboardType="numeric"
+                accessibilityLabel="Buy Amount"
+              />
+            </View>
+            <View>
+              <Text className="text-lg text-gray-300 mb-2">Payment Method</Text>
+              <ThemedDropdown
+                data={PAYMENT_METHODS}
+                value={buyMethod}
+                onSelect={setBuyMethod}
+              />
+            </View>
+            <ThemedButton
+              className="bg-blue-500 p-3 mt-4"
               onPress={invest}
-              accessibilityLabel="Confirm Purchase"
-            >
-              <Text className="text-white text-center text-base font-medium">
-                {account ? "Confirm Purchase" : "Connect Metamask"}
-              </Text>
-            </TouchableOpacity>
+              title={account ? "Confirm Purchase" : "Connect Metamask"}
+              loading={isConnecting}
+              disabled={isConnecting}
+            />
             {buyConfirmation ? (
               <Text
                 className="text-green-600 text-center"
@@ -244,11 +206,6 @@ const Invest = () => {
             <Text className="text-2xl font-bold text-white mb-3">
               Sell Token
             </Text>
-            {error ? (
-              <Text className="text-red-600 mb-4" accessibilityRole="alert">
-                {error}
-              </Text>
-            ) : null}
             <Text className="text-lg text-gray-300 mb-2">
               Select Amount (grams/tokens):
             </Text>
@@ -285,7 +242,6 @@ const Invest = () => {
             </TouchableOpacity>
             <TouchableOpacity
               className="p-3 bg-[#050142] rounded-md mb-4"
-              onPress={sellGold}
               accessibilityLabel="Confirm Sale"
             >
               <Text className="text-white text-center text-base font-medium">

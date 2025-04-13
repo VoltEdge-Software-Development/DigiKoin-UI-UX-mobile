@@ -5,13 +5,13 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Slot, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { ThirdwebProvider } from "thirdweb/react";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthContextProvider } from "@/contexts/authContext";
+import Toast from "react-native-toast-message";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -36,7 +36,8 @@ export default function RootLayout() {
     <ThirdwebProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <AuthContextProvider>
-          <Stack></Stack>
+          <Slot />
+          <Toast />
         </AuthContextProvider>
       </ThemeProvider>
     </ThirdwebProvider>
