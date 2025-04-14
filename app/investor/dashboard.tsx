@@ -143,15 +143,6 @@ const InvestorDashboard = () => {
             <View className="flex-row justify-center gap-4">
               <TouchableOpacity
                 className="p-2 px-5 bg-[#050142] rounded-md"
-                accessibilityLabel="Invest Now"
-                onPress={() => {
-                  router.push("/investor/invest");
-                }}
-              >
-                <Text className="text-white text-base">Invest Now</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="p-2 px-5 bg-[#050142] rounded-md"
                 onPress={handleViewWhitepaper}
                 accessibilityLabel="View Whitepaper"
               >
@@ -370,16 +361,6 @@ const InvestorDashboard = () => {
                 </Text>
               </View>
             </View>
-
-            {/* Profile Navigation */}
-            <TouchableOpacity
-              className="p-3 bg-[#050142] rounded-md mt-5"
-              accessibilityLabel="View Investor Profile"
-            >
-              <Text className="text-white text-center text-base font-medium">
-                View Profile
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       </View>

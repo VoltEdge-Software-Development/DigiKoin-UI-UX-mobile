@@ -13,12 +13,13 @@ import {
   User,
 } from "firebase/auth";
 import { auth, db } from "@/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useStorageState } from "@/hooks/useStorageState";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { AuthParams, UserType } from "@/types";
+import Toast from "react-native-toast-message";
 
 GoogleSignin.configure({
   // webClientId: process.env.EXPO_PUBLIC_WEB_ID,
@@ -40,8 +41,8 @@ interface AuthContextType {
   signIn: (params: AuthParams) => Promise<void>;
   signUp: (email: string, password: string, type: UserType) => Promise<void>;
   signOut: () => void;
-  session?: string | null;
-  isLoading: boolean;
+  session: [boolean, string | null];
+  kyc: [boolean, string | null];
 }
 
 // Create the context with an initial value
@@ -52,32 +53,41 @@ const AuthContext: React.Context<AuthContextType | undefined> = createContext<
 export const AuthContextProvider = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [[isLoading, session], setSession] = useStorageState("session");
+  const [session, setSession] = useStorageState("session");
+  const [kyc, setKYC] = useStorageState("kyc");
 
   // onAuthStateChange
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
         setSession(user.refreshToken);
-        // setIsAuthenticated(true);
         setUser(user);
+        // ✅ Get user document from Firestore
+        const userRef = doc(db, "users", user.uid);
+        getDoc(userRef).then(userSnap => {
+          if (!userSnap.exists()) {
+            Toast.show({
+              type: "error",
+              text1: "User record not found.",
+            });
+            return;
+          }
+
+          const userData = userSnap.data();
+          const { kyc } = userData;
+
+          // ✅ Check if KYC is valid
+          const isValidKYC = Array.isArray(kyc) && kyc.length === 2;
+          setKYC(isValidKYC ? "verified" : "unverified")
+        });
       } else {
+        router.replace("/welcome");
         setSession(null);
-        // setIsAuthenticated(false);
         setUser(null);
       }
     });
     return unsub;
   }, []);
-
-  useEffect(() => {
-    if (session) {
-      router.replace("/(app)");
-    } else {
-      // redirect to welcome
-      router.replace("/welcome");
-    }
-  }, [session]);
 
   const signIn = async (params: AuthParams) => {
     try {
@@ -108,7 +118,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
   };
 
   const signOut = async () => {
-    setSession(null);
+    auth.signOut();
   };
 
   const signUp = async (email: string, password: string, type: UserType) => {
@@ -171,7 +181,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
         signUp,
         signOut,
         session,
-        isLoading,
+        kyc,
       }}
     >
       {children}

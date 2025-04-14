@@ -1,272 +1,341 @@
-import React, { useEffect, useState } from "react";
+import { TROY_OUNCE_IN_GRAMS_E8 } from "@/constants";
+import { dgkTokenContract, goldReserveManagerContract, priceFeedContract } from "@/constants/thirdweb";
+import { calculateEthFromGold, formatBigIntDivision } from "@/utils";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Image,
   FlatList,
-  Alert,
+  ScrollView,
+  Linking,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import { useActiveAccount, useReadContract, useSendTransaction } from "thirdweb/react";
+import { balanceOf } from "thirdweb/extensions/erc20";
+import { ThemedInput } from "@/components/ThemedInput";
+import { ThemedButton } from "@/components/ThemedButton";
+import { prepareContractCall, toWei, Address } from "thirdweb";
+import { transfer } from "thirdweb/extensions/erc20";
+import { sendTransaction as sendTransactionToWallet } from "thirdweb";
 
-type WalletType = "digikoin" | "btc" | "eth" | "usdt";
-type ActionType = "deposit" | "withdraw" | "transfer";
 type Status = "confirmed" | "pending" | "failed";
-
-interface WalletBalances {
-  [key: string]: string;
-}
-
-interface Transaction {
+type Transaction = {
   id: string;
   date: string;
   type: string;
   amount: string;
   status: Status;
 }
+const TX_DUMMY_DATA: Transaction[] = [
+  {
+    id: "1",
+    date: "2025-02-10",
+    type: "Deposit",
+    amount: "1 BTC",
+    status: "confirmed",
+  },
+  {
+    id: "2",
+    date: "2025-02-09",
+    type: "Withdraw",
+    amount: "0.5 ETH",
+    status: "pending",
+  },
+  {
+    id: "3",
+    date: "2025-02-08",
+    type: "Deposit",
+    amount: "100 USDT",
+    status: "failed",
+  },
+  {
+    id: "4",
+    date: "2025-02-07",
+    type: "Deposit",
+    amount: "2 BTC",
+    status: "confirmed",
+  },
+  {
+    id: "5",
+    date: "2025-02-06",
+    type: "Transfer",
+    amount: "1 ETH",
+    status: "pending",
+  },
+  {
+    id: "6",
+    date: "2025-02-05",
+    type: "Deposit",
+    amount: "200 USDT",
+    status: "failed",
+  },
+  {
+    id: "7",
+    date: "2025-02-04",
+    type: "Transfer",
+    amount: "0.3 BTC",
+    status: "confirmed",
+  },
+  {
+    id: "8",
+    date: "2025-02-03",
+    type: "Withdraw",
+    amount: "0.2 ETH",
+    status: "pending",
+  },
+  {
+    id: "9",
+    date: "2025-02-02",
+    type: "Deposit",
+    amount: "50 USDT",
+    status: "confirmed",
+  },
+];
 
-const initialBalances: WalletBalances = {
-  digikoin: "100 DGK",
-  btc: "0.5 BTC",
-  eth: "2 ETH",
-  usdt: "500 USDT",
-};
+type Tab = "Buy" | "Sell" | "Send";
+const TABS: Tab[] = [
+  "Buy",
+  "Sell",
+  "Send",
+]
 
-const Wallet: React.FC = () => {
-  const [wallet, setWallet] = useState<WalletType>("digikoin");
-  const [balances, setBalances] = useState<WalletBalances>(initialBalances);
-  const [action, setAction] = useState<ActionType | null>(null);
-  const [form, setForm] = useState({
-    amount: "",
-    source: "" as WalletType | "",
-    destination: "" as WalletType | "",
+interface TabPropsType {
+  activeTab: Tab;
+}
+const Tab: React.FC<TabPropsType> = (props) => {
+  const [amount, setAmount] = useState<string>("");
+  const [recipient, setRecipient] = useState<string>("");
+  const account = useActiveAccount();
+  const { mutate: sendTransaction, isPending } = useSendTransaction();
+  const disabled = useMemo(() => !account || isNaN(parseFloat(amount)) || (props.activeTab === "Send" && !recipient), [account, amount, recipient, props]);
+  const { data: ethPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getEthPrice() public view returns (uint256)",
   });
-  const [message, setMessage] = useState({ error: "", success: "" });
+  const { data: xauPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getXauPrice() public view returns (uint256)",
+  });
 
-  const transactions: Transaction[] = [
-    {
-      id: "1",
-      date: "2025-02-10",
-      type: "Deposit",
-      amount: "1 BTC",
-      status: "confirmed",
-    },
-    {
-      id: "2",
-      date: "2025-02-09",
-      type: "Withdraw",
-      amount: "0.5 ETH",
-      status: "pending",
-    },
-    {
-      id: "3",
-      date: "2025-02-08",
-      type: "Deposit",
-      amount: "100 USDT",
-      status: "failed",
-    },
-    {
-      id: "4",
-      date: "2025-02-07",
-      type: "Deposit",
-      amount: "2 BTC",
-      status: "confirmed",
-    },
-    {
-      id: "5",
-      date: "2025-02-06",
-      type: "Transfer",
-      amount: "1 ETH",
-      status: "pending",
-    },
-    {
-      id: "6",
-      date: "2025-02-05",
-      type: "Deposit",
-      amount: "200 USDT",
-      status: "failed",
-    },
-    {
-      id: "7",
-      date: "2025-02-04",
-      type: "Transfer",
-      amount: "0.3 BTC",
-      status: "confirmed",
-    },
-    {
-      id: "8",
-      date: "2025-02-03",
-      type: "Withdraw",
-      amount: "0.2 ETH",
-      status: "pending",
-    },
-    {
-      id: "9",
-      date: "2025-02-02",
-      type: "Deposit",
-      amount: "50 USDT",
-      status: "confirmed",
-    },
-  ];
-
-  const parseAmount = (str: string) =>
-    parseFloat(str.match(/[\d.]+/)?.[0] || "0");
-  const formatBalance = (original: string, delta: number) => {
-    const amount = parseAmount(original) + delta;
-    const unit = original.replace(/[\d.]+/, "").trim();
-    return `${Math.max(amount, 0)} ${unit}`;
-  };
-
-  const updateWallet = (delta: number, key: WalletType) => {
-    setBalances((prev) => ({
-      ...prev,
-      [key]: formatBalance(prev[key], delta),
-    }));
-  };
-
-  const resetForm = () => {
-    setForm({ amount: "", source: "", destination: "" });
-    setAction(null);
-    setMessage({ error: "", success: "" });
-  };
-
-  const handleAction = () => {
-    const amount = parseFloat(form.amount);
-    if (isNaN(amount) || amount <= 0)
-      return setMessage({ error: "Invalid amount.", success: "" });
-
-    if (action === "deposit") {
-      updateWallet(amount, wallet);
-      setMessage({ success: `Deposited ${amount} to ${wallet}`, error: "" });
-    } else if (action === "withdraw") {
-      if (parseAmount(balances[wallet]) < amount)
-        return setMessage({ error: "Insufficient funds.", success: "" });
-      updateWallet(-amount, wallet);
-      setMessage({ success: `Withdrew ${amount} from ${wallet}`, error: "" });
-    } else if (action === "transfer") {
-      const { source, destination } = form;
-      if (!source || !destination || source === destination)
-        return setMessage({
-          error: "Invalid source/destination.",
-          success: "",
-        });
-      if (parseAmount(balances[source]) < amount)
-        return setMessage({
-          error: "Insufficient source balance.",
-          success: "",
-        });
-      updateWallet(-amount, source);
-      updateWallet(amount, destination);
-      setMessage({
-        success: `Transferred ${amount} from ${source} to ${destination}`,
-        error: "",
-      });
-    }
-
-    setTimeout(resetForm, 3000);
-  };
-
-  const WalletPicker = (label: string, onSelect: (w: WalletType) => void) => (
-    <TouchableOpacity
-      className="border border-gray-300 p-2 rounded-md mb-4 bg-gray-100"
-      onPress={() =>
-        Alert.alert(label, "", [
-          { text: "DigiKoin", onPress: () => onSelect("digikoin") },
-          { text: "BTC", onPress: () => onSelect("btc") },
-          { text: "ETH", onPress: () => onSelect("eth") },
-          { text: "USDT", onPress: () => onSelect("usdt") },
-          { text: "Cancel", style: "cancel" },
-        ])
+  const confirm = async () => {
+    if (ethPrice && xauPrice) {
+      if (account) {
+        if (isNaN(parseFloat(amount))) {
+        } else {
+          if (props.activeTab === "Buy") {
+            const transaction = prepareContractCall({
+              contract: goldReserveManagerContract,
+              method: "function holdGold(uint256 grams) external payable",
+              params: [toWei(amount)],
+              value: calculateEthFromGold(amount, xauPrice, ethPrice),
+            });
+            sendTransaction(transaction, {
+              onError: (error) => {
+                console.error("holdGold: ", error);
+              },
+              onSuccess(data) {
+                Toast.show({
+                  type: "success",
+                  text1: `Succssfully bought ${amount} $DGK`,
+                  text2: 'Click to view transaction',
+                  onPress: () => {
+                    const explorers = data.chain.blockExplorers;
+                    if (explorers?.length) {
+                      Linking.openURL(`${explorers[0].url}/tx/${data.transactionHash}`)
+                    }
+                  }
+                })
+              },
+            });
+          }
+          if (props.activeTab === "Sell") {
+            const transaction = prepareContractCall({
+              contract: goldReserveManagerContract,
+              method: "function redeemGold(uint256 grams) external",
+              params: [toWei(amount)],
+            });
+            sendTransaction(transaction, {
+              onError: (error) => {
+                console.error("redeemGold: ", error);
+              },
+              onSuccess(data) {
+                Toast.show({
+                  type: "success",
+                  text1: `Succssfully sold ${amount} $DGK`,
+                  text2: 'Click to view transaction',
+                  onPress: () => {
+                    const explorers = data.chain.blockExplorers;
+                    if (explorers?.length) {
+                      Linking.openURL(`${explorers[0].url}/tx/${data.transactionHash}`)
+                    }
+                  }
+                })
+              },
+            });
+          }
+          if (props.activeTab === "Send" && recipient) {
+            const transaction = transfer({
+              contract: dgkTokenContract,
+              to: recipient,
+              amount: amount,
+            });
+            sendTransactionToWallet({ transaction, account })
+              .then((data) => {
+                Toast.show({
+                  type: "success",
+                  text1: `Succssfully sent ${amount} $DGK`,
+                  text2: 'Click to view transaction',
+                  onPress: () => {
+                    const explorers = data.chain.blockExplorers;
+                    if (explorers?.length) {
+                      Linking.openURL(`${explorers[0].url}/tx/${data.transactionHash}`)
+                    }
+                  }
+                })
+              })
+              .catch((error) => {
+                console.error("transfer: ", error);
+              });
+          }
+        }
       }
-    >
-      <Text className="text-[#454545]">{label}</Text>
-    </TouchableOpacity>
-  );
+    }
+  }
 
   return (
-    <View className="flex-1 mt-[70px] p-5 bg-gray-200/85">
-      <View className="p-5 bg-orange-50 rounded-[10px] mb-5 items-center">
-        <Image
-          source={require("@/assets/images/icon.png")}
-          className="w-12 h-12 mb-3"
+    <View className="bg-gray-700 rounded-b flex flex-col gap-2 overflow-visible p-4">
+      <Text className="text-2xl font-bold text-white mb-3">{props.activeTab} $DGK</Text>
+      <View className="flex flex-col gap-2">
+        <ThemedInput
+          placeholder="Amount"
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="numeric"
+          accessibilityLabel="Buy Amount"
         />
+        {props.activeTab === "Send" &&
+          <ThemedInput
+            placeholder="Recipient address 0x..."
+            value={recipient}
+            onChangeText={setRecipient}
+            keyboardType="numeric"
+            accessibilityLabel="Buy Amount"
+          />
+        }
+      </View>
+      <ThemedButton
+        className={`${disabled ? 'bg-gray-500' : 'bg-blue-500'} w-1/2 m-auto p-3 mt-4`}
+        onPress={confirm}
+        title={account ? "Confirm" : "Please connect wallet"}
+        disabled={disabled}
+      />
+    </View>
+  );
+}
+
+const Wallet = () => {
+  const account = useActiveAccount();
+  const { data: ethPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getEthPrice() public view returns (uint256)",
+  });
+  const { data: xauPrice } = useReadContract({
+    contract: priceFeedContract,
+    method: "function getXauPrice() public view returns (uint256)",
+  });
+  const [dgkBalance, setDGKBalance] = useState<bigint | "NaN">("NaN");
+  const [activeTab, setActiveTab] = useState<Tab>("Buy");
+
+  useEffect(() => {
+    if (account) {
+      balanceOf({
+        contract: dgkTokenContract,
+        address: account.address,
+      }).then((result) => {
+        setDGKBalance(result);
+      });
+    } else {
+      setDGKBalance("NaN");
+    }
+  }, [account]);
+
+  return (
+    <ScrollView className="flex-1 p-5 bg-gray-200/85 flex flex-col gap-4">
+      <View className="p-5 bg-orange-50 rounded-[10px] mb-5 items-center">
+        <View className="w-[50%] aspect-square">
+          <Image
+            source={require("@/assets/images/icon.png")}
+            className="size-full"
+            accessibilityIgnoresInvertColors
+          />
+        </View>
         <Text className="text-2xl font-bold text-[#050142] mb-2">
           Current Balance
         </Text>
         <Text className="text-lg text-[#454545]">
-          Balance: {balances[wallet]}
+          {dgkBalance.toString()} DGK
         </Text>
       </View>
 
-      <View className="p-5 bg-white/10 rounded-[10px] shadow-sm mb-5">
-        <Text className="text-2xl font-bold text-[#454545] mb-3">Wallet</Text>
-        <Text className="text-lg text-[#454545] mb-2">Choose Wallet:</Text>
-        {WalletPicker(wallet.toUpperCase(), setWallet)}
+      {xauPrice && ethPrice ? (
+        <Text className="text-md font-bold mb-3">
+          {`1 Troy ounce gold = ${formatBigIntDivision(
+            xauPrice,
+            100000000n
+          )} USD\n`}
+          {`1 Ether = ${formatBigIntDivision(ethPrice, 100000000n)} USD\n`}
+          {`1 DGK = 1 Gram gold ≈ ${formatBigIntDivision(
+            xauPrice,
+            TROY_OUNCE_IN_GRAMS_E8
+          )} USD ≈ ${Number(
+            formatBigIntDivision(
+              xauPrice * 100000000n,
+              TROY_OUNCE_IN_GRAMS_E8 * ethPrice
+            )
+          )} ETH`}
+        </Text>
+      ) : (
+        <></>
+      )}
 
-        <View className="flex-row justify-around mb-4">
-          {(["deposit", "withdraw", "transfer"] as ActionType[]).map((a) => (
-            <TouchableOpacity
-              key={a}
-              className="p-2 px-4 bg-[#050142] rounded-md"
-              onPress={() => {
-                setAction(a);
-                setMessage({ error: "", success: "" });
-              }}
-            >
-              <Text className="text-white text-base capitalize">{a}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {message.error && (
-          <Text className="text-red-600 mb-4 text-center">{message.error}</Text>
-        )}
-        {message.success && (
-          <Text className="text-green-600 mb-4 text-center">
-            {message.success}
-          </Text>
-        )}
-
-        {action && (
-          <View>
-            {action === "transfer" && (
-              <>
-                {WalletPicker(
-                  `From: ${form.source || "Select source wallet"}`,
-                  (w) => setForm((f) => ({ ...f, source: w }))
-                )}
-                {WalletPicker(
-                  `To: ${form.destination || "Select destination wallet"}`,
-                  (w) => setForm((f) => ({ ...f, destination: w }))
-                )}
-              </>
-            )}
-            <TextInput
-              className="border border-gray-300 p-2 rounded-md mb-4 text-[#454545]"
-              placeholder="Enter amount"
-              value={form.amount}
-              onChangeText={(val) => setForm((f) => ({ ...f, amount: val }))}
-              keyboardType="numeric"
-            />
-            <TouchableOpacity
-              className="p-3 bg-[#050142] rounded-md mb-4"
-              onPress={handleAction}
-            >
-              <Text className="text-white text-center text-base font-medium">
-                Confirm {action}
-              </Text>
-            </TouchableOpacity>
+      <View className="rounded">
+        <View className='flex-1'>
+          {/* Tab headers */}
+          <View className='flex-row border-b border-gray-200'>
+            {TABS.map((tab, index) => (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                className={`flex-1 items-center py-3 px-4 ${activeTab === tab && 'border-b-2 border-blue-500'}`}
+              >
+                <Text
+                  className={`font-medium ${activeTab === tab ? 'text-blue-500' : 'text-gray-500'}`}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
+
+          {/* Tab content */}
+          <View className='flex-1'>
+            {activeTab === 'Buy' && <Tab activeTab="Buy" />}
+            {activeTab === 'Sell' && <Tab activeTab="Sell" />}
+            {activeTab === 'Send' && <Tab activeTab="Send" />}
+          </View>
+        </View>
       </View>
 
-      <View className="p-5 bg-white/10 rounded-[10px] shadow-sm">
-        <Text className="text-2xl font-bold text-[#454545] mb-3">
+      <View className="p-5 rounded">
+        <Text className="text-2xl font-bold text-[#454545] text-center mb-3">
           Transaction History
         </Text>
         <FlatList
-          data={transactions}
+          data={TX_DUMMY_DATA}
           keyExtractor={(item) => item.id}
+          scrollEnabled={false}
           ListHeaderComponent={() => (
             <View className="flex-row justify-between py-2 border-b border-gray-300">
               {["Date", "Type", "Amount", "Status"].map((label) => (
@@ -285,13 +354,12 @@ const Wallet: React.FC = () => {
               <Text className="text-[#454545] flex-1">{item.type}</Text>
               <Text className="text-[#454545] flex-1">{item.amount}</Text>
               <Text
-                className={`flex-1 text-center ${
-                  item.status === "confirmed"
-                    ? "text-green-600"
-                    : item.status === "pending"
+                className={`flex-1 text-center ${item.status === "confirmed"
+                  ? "text-green-600"
+                  : item.status === "pending"
                     ? "text-yellow-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
               </Text>
@@ -299,7 +367,7 @@ const Wallet: React.FC = () => {
           )}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
