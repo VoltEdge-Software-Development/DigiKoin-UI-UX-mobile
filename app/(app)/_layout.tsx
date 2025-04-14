@@ -17,7 +17,7 @@ export default function AppLayout() {
   if (!token) {
     // On web, static rendering will stop here as the user is not authenticated
     // in the headless Node process that the pages are rendered in.
-    return <Redirect href="/welcome" />;
+    return <Redirect href="/signIn" />;
   }
 
   if (checking) {

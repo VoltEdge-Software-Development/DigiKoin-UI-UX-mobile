@@ -93,19 +93,17 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
     try {
       if ("method" in params) {
         if (params.method === "google") {
-          const response = await GoogleLogin();
-          const { type, data: user } = response ?? {};
-          setSession(user?.idToken ?? null);
+          await GoogleLogin();
         }
       } else {
-        const user = await signInWithEmailAndPassword(
+        await signInWithEmailAndPassword(
           auth,
           params.email,
           params.password
         );
-        setSession(user.providerId);
         await AsyncStorage.setItem("userEmail", params.email);
       }
+      router.replace('/(app)');
     } catch (error: any) {
       let msg = error?.message;
 
