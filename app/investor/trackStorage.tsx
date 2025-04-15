@@ -77,7 +77,7 @@ const GoldStorage: React.FC = () => {
   }, []);
 
   return (
-    <ScrollView className="flex-1 p-5 bg-gray-200/85">
+    <ScrollView className="flex-1 p-5">
       {/* Dashboard Grid */}
       <View className="flex-col gap-5">
         {/* 1. Gold Production & Processing Data */}

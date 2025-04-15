@@ -12,6 +12,7 @@ import { ThirdwebProvider } from "thirdweb/react";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthContextProvider } from "@/contexts/authContext";
 import Toast from "react-native-toast-message";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -33,13 +34,17 @@ export default function RootLayout() {
   }
 
   return (
-    <ThirdwebProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <AuthContextProvider>
-          <Slot />
-          <Toast />
-        </AuthContextProvider>
-      </ThemeProvider>
-    </ThirdwebProvider>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ThirdwebProvider>
+          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+            <AuthContextProvider>
+              <Slot />
+              <Toast />
+            </AuthContextProvider>
+          </ThemeProvider>
+        </ThirdwebProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

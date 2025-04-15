@@ -83,7 +83,7 @@ const Profile = () => {
   };
 
   return (
-    <ScrollView className="flex-1 p-5 bg-gray-100">
+    <ScrollView className="flex-1 p-5">
       {/* Message Display */}
       {message ? (
         <Text className="text-center text-base text-green-600 mb-5">

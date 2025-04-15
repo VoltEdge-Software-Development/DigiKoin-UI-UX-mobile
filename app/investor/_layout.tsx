@@ -1,13 +1,12 @@
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
-import { Colors } from "@/constants/Colors";
-import { Image } from "react-native";
+import { Image, View, Text } from "react-native";
 import { ConnectButton } from "thirdweb/react";
 import { createWallet } from "thirdweb/wallets";
 import { client } from "@/constants/thirdweb";
 import { sepolia } from "thirdweb/chains";
-// import "@/styles/index.css";
+import { LinearGradient } from "expo-linear-gradient";
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -17,126 +16,93 @@ function TabBarIcon(props: {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
 }
 
-const wallets = [
-  createWallet("io.metamask"),
-  createWallet("com.coinbase.wallet", {
-    appMetadata: {
-      name: "DigiKoin",
-    },
-    mobileConfig: {
-      callbackURL: "com.voltedge.digikoin://",
-    },
-    walletConfig: {
-      options: "smartWalletOnly",
-    },
-  }),
-  createWallet("me.rainbow"),
-  createWallet("com.trustwallet.app"),
-  createWallet("io.zerion.wallet"),
-];
-
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#FFFFFF",
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        // headerShown: useClientOnlyValue(false, true),
-        // tabBarBackground: "black",
-        tabBarStyle: {
-          backgroundColor: "#000000", // Black background
-          borderTopWidth: 0, // Remove top border
-          elevation: 0, // Remove shadow on Android
-        },
-        tabBarInactiveTintColor: "#888888", // Gray for inactive tabs
-        headerStyle: {
-          backgroundColor: "#1a1a1a", // Dark header
-        },
-        headerTitleStyle: {
-          color: "white", // White text
-          fontWeight: "bold",
-        },
-        headerTintColor: "white", // Back button color
-        headerLeft: () => (
-          <Image
-            source={require("@/assets/images/Gorilla.png")}
-            className="h-[80%] w-auto aspect-square ml-3"
-            accessibilityIgnoresInvertColors
-          />
-        ),
-        headerRight: () => (
-          <ConnectButton
-            client={client}
-            theme={"dark"}
-            wallets={wallets}
-            chain={sepolia}
-            connectButton={{
-              label: "Connect",
+    <LinearGradient
+      colors={['#2A1F1A', '#01011A']}
+      start={{ x: 0.5, y: 0 }}   // Starts from top center
+      end={{ x: 0.5, y: 1 }}     // Ends at bottom center
+      style={{
+        flex: 1,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: "#FFFFFF",
+            // Disable the static render of the header on web
+            // to prevent a hydration error in React Navigation v6.
+            // headerShown: useClientOnlyValue(false, true),
+            // tabBarBackground: "black",
+            tabBarStyle: {
+              backgroundColor: "#000000", // Black background
+              borderTopWidth: 0, // Remove top border
+              elevation: 0, // Remove shadow on Android
+            },
+            tabBarInactiveTintColor: "#888888", // Gray for inactive tabs
+            header: (props) => {
+              return (
+                <View className="h-20 w-full flex flex-row items-center justify-between px-4">
+                  <View className="flex flex-row items-center gap-2">
+                    <View className="h-[70%] aspect-square justify-center">
+                      <Image
+                        source={require("@/assets/images/Gorilla.png")}
+                        className="size-full"
+                        accessibilityIgnoresInvertColors
+                      />
+                    </View>
+                    <Text className="text-[#9F9F9F] text-2xl font-bold">
+                      {props.options.title}
+                    </Text>
+                  </View>
+                  <View className="w-56">
+                    <ConnectButton
+                      client={client}
+                      wallets={[createWallet("io.metamask")]}
+                      chain={sepolia}
+                      showAllWallets={false}
+                    />
+                  </View>
+                </View>
+              );
+            },
+          }}
+          sceneContainerStyle={{
+            backgroundColor: "transparent",
+          }}
+        >
+          <Tabs.Screen
+            name="dashboard"
+            options={{
+              title: "Dashboard",
+              tabBarIcon: ({ color }) => <TabBarIcon name="dashboard" color={color} />,
             }}
           />
-        ),
-        // account ? (
-        //   <ThemedButton
-        //     className="p-3 mt-4"
-        //     onPress={() => {
-        //       Alert.alert("Disconnect?", "", [
-        //         { text: "OK", onPress: () => disconnect() },
-        //         { text: "Cancel", style: "cancel" },
-        //       ]);
-        //     }}
-        //     title={shortenAddress(account.address)}
-        //   />
-        // ) : (
-        //   <ThemedButton
-        //     className="p-3 mt-4"
-        //     onPress={() => {
-        //       connect(async () => {
-        //         const w = createWallet("io.metamask");
-        //         await w.connect({
-        //           client,
-        //         });
-        //         return w;
-        //       });
-        //     }}
-        //     title={"Connect wallet"}
-        //     loading={isConnecting}
-        //     disabled={isConnecting}
-        //   />
-        // ),
-      }}
-      sceneContainerStyle={{ backgroundColor: Colors["dark"].tint }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color }) => <TabBarIcon name="dashboard" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: "Wallet",
-          tabBarIcon: ({ color }) => <TabBarIcon name="money" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="trackStorage"
-        options={{
-          title: "Track",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="compass" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-        }}
-      />
-    </Tabs>
+          <Tabs.Screen
+            name="wallet"
+            options={{
+              title: "Wallet",
+              tabBarIcon: ({ color }) => <TabBarIcon name="money" color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="trackStorage"
+            options={{
+              title: "Track",
+              tabBarIcon: ({ color }) => (
+                <TabBarIcon name="compass" color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: "Profile",
+              tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+            }}
+          />
+        </Tabs>
+      </View>
+    </LinearGradient>
   );
 }

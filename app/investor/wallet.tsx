@@ -262,7 +262,7 @@ const Wallet = () => {
   }, [account]);
 
   return (
-    <ScrollView className="flex-1 p-5 bg-gray-200/85 flex flex-col gap-4">
+    <ScrollView className="flex-1 p-5 flex flex-col gap-4">
       <View className="p-5 bg-orange-50 rounded-[10px] mb-5 items-center">
         <View className="w-[50%] aspect-square">
           <Image
