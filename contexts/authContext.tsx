@@ -1,28 +1,30 @@
 import {
   createContext,
   PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
   User,
+  signInWithCredential,
+  GoogleAuthProvider,
 } from "firebase/auth";
 import { auth, db } from "@/firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useStorageState } from "@/hooks/useStorageState";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { AuthParams, UserType } from "@/types";
 import Toast from "react-native-toast-message";
 
 GoogleSignin.configure({
-  // webClientId: process.env.EXPO_PUBLIC_WEB_ID,
+  webClientId: process.env.EXPO_PUBLIC_WEB_ID,
   scopes: ["profile", "email"], // what API you want to access on behalf of the user, default is email and profile
   // offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
   forceCodeForRefreshToken: false,
@@ -51,7 +53,6 @@ const AuthContext: React.Context<AuthContextType | undefined> = createContext<
 >(undefined);
 
 export const AuthContextProvider = ({ children }: PropsWithChildren) => {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useStorageState("session");
   const [kyc, setKYC] = useStorageState("kyc");
@@ -89,19 +90,34 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
     return unsub;
   }, []);
 
-  const signIn = async (params: AuthParams) => {
+  const signIn = useCallback(async (params: AuthParams) => {
     try {
       if ("method" in params) {
-        if (params.method === "google") {
-          await GoogleLogin();
+        // Check if your device supports Google Play
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        // Get the users ID token
+        const signInResult = await GoogleSignin.signIn();
+
+        // Try the new style of google-sign in result, from v13+ of that module
+        const idToken = signInResult.data?.idToken;
+        if (idToken) {
+          // Create a Google credential with the token
+          const googleCredential = GoogleAuthProvider.credential(idToken);
+          // Sign-in the user with the credential
+          await signInWithCredential(auth, googleCredential);
+        } else {
+          throw new Error('No ID token found');
         }
+
+        // if (params.method === "google") {
+        //   await GoogleLogin();
+        // }
       } else {
         await signInWithEmailAndPassword(
           auth,
           params.email,
           params.password
         );
-        await AsyncStorage.setItem("userEmail", params.email);
       }
       router.replace('/(app)');
     } catch (error: any) {
@@ -113,13 +129,13 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
 
       Alert.alert("Error", msg);
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     auth.signOut();
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string, type: UserType) => {
+  const signUp = useCallback(async (email: string, password: string, type: UserType) => {
     try {
       const response = await createUserWithEmailAndPassword(
         auth,
@@ -169,7 +185,7 @@ export const AuthContextProvider = ({ children }: PropsWithChildren) => {
       Alert.alert("Error", msg);
       // return { success: false, msg };
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

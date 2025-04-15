@@ -8,7 +8,10 @@ function useAsyncState<T>(
   initialValue: [boolean, T | null] = [true, null],
 ): UseStateHook<T> {
   return useReducer(
-    (state: [boolean, T | null], action: T | null = null): [boolean, T | null] => [false, action],
+    (state: [boolean, T | null], action: T | null = null): [boolean, T | null] => {
+      if (state[1] === action) return state;
+      return [false, action];
+    },
     initialValue
   ) as UseStateHook<T>;
 }
@@ -39,28 +42,33 @@ export function useStorageState(key: string): UseStateHook<string> {
 
   // Get
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    const load = async () => {
       try {
-        if (typeof localStorage !== 'undefined') {
-          setState(localStorage.getItem(key));
+        const value =
+          Platform.OS === 'web'
+            ? localStorage.getItem(key)
+            : await AsyncStorage.getItem(key);
+
+        if (state[1] !== value) {
+          setState(value);
         }
       } catch (e) {
-        console.error('Local storage is unavailable:', e);
+        console.error('Storage error:', e);
       }
-    } else {
-      AsyncStorage.getItem(key).then(value => {
-        setState(value);
-      });
-    }
+    };
+
+    load();
   }, [key]);
 
   // Set
   const setValue = useCallback(
     (value: string | null) => {
-      setState(value);
-      setStorageItemAsync(key, value);
+      if (state[1] !== value) {
+        setState(value);
+        setStorageItemAsync(key, value);
+      }
     },
-    [key]
+    [key, state]
   );
 
   return [state, setValue];
